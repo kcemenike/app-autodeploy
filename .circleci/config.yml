@@ -138,7 +138,6 @@ jobs:
           command: |
             cd backend
             npm install
-            npm update mkdirp --depth 6
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
 
