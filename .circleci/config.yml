@@ -145,10 +145,7 @@ jobs:
             npm install --save-dev webpack@5.73.0
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-            exit 1
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      - slack/notify
 
 #  deploy-infrastructure:
 #    docker:
