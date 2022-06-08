@@ -49,8 +49,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build]
+      # - restore_cache:
+      #     keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -66,8 +66,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
+      # - restore_cache:
+      #     keys: [backend-build]
       - run:
           name: Back-end build
           command: |
@@ -233,12 +233,12 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
-      - restore_cache:
-          keys: [backend-build]
       - run:
           name: Install dependencies
           command: |
             apk add --update --no-cache tar gzip nodejs npm  aws-cli
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
@@ -246,10 +246,6 @@ jobs:
             npm install
             npm run build
             npm run migrations > migrations_dump.txt
-      - run:
-          name: check migrations file
-          command: |
-            cd backend
             ls -al
             cat migrations_dump.txt
       - run:
@@ -380,8 +376,8 @@ jobs:
             echo $URL
             if curl -s ${URL} | grep "Welcome"
             then
-                # Change this to 0 after the job fails
-              return 1
+              # Change this to 0 after the job fails
+              return 0
             else
               return 1
             fi
