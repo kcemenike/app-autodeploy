@@ -207,8 +207,10 @@ jobs:
           name: Install dependencies
           command: |
             yum update -y
-            yum install epel-release -y
-            yum install tar gzip ansible -y
+            # yum install epel-release -y
+            wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+            yum install tar gzip -y
+            yum install ansible -y
             # apk add --update --no-cache tar gzip ansible aws-cli
       # attach workspace
       - attach_workspace:
