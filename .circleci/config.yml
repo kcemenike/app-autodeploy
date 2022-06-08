@@ -206,11 +206,6 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # yum update -y
-            # yum install epel-release -y
-            # wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-            # yum install tar gzip -y
-            # yum install ansible -y
             apk add --update --no-cache tar gzip ansible aws-cli
       # attach workspace
       - attach_workspace:
@@ -236,7 +231,7 @@ jobs:
           name: Install node
           command: |
             yum update -y
-            yum install nodejs npm -y --enablerepo=epel-testing
+            yum install nodejs npm -y --enablerepo=epel
       - run:
           name: Run migrations
           command: |
@@ -297,22 +292,39 @@ jobs:
       # Here's where you will add some code to rollback on failure
       - destroy-environment
 
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.10-alpine3.16
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints:
+            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update --no-cache tar gzip ansible aws-cli nodejs npm
+      - run:
+          name: Deploy backend
+          command: |
+            # your code here
+            cd backend
+            npm install
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz
+            cd .circleci/ansible
+            echo "Contents of the inventory.txt file is ------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml 0\
+            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+      # Here's where you will add some code to rollback on failure
 
 #   smoke-test:
 #     docker:
