@@ -25,6 +25,7 @@ commands:
     steps:
       - run:
           name: Revert migrations
+          when: on_fail
           # Add when this will run
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
@@ -182,6 +183,7 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
             --output text) >> ~/project/.circleci/ansible/inventory.txt
+            cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -224,6 +226,8 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Install dependencies
           command: |
@@ -263,20 +267,6 @@ jobs:
           name: Install deps
           command: |
             apk add --update --no-cache tar gzip nodejs npm ansible  aws-cli
-      # - run:
-      #     name: Update yum
-      #     command: |
-      #       yum update -y
-      # - run:
-      #     name: Install other dependencies
-      #     command: |
-      #       yum install -y python3 nodejs npm
-      # - run:
-      #     name: Enable the ansible repo
-      #     command: |
-      #       amazon-linux-extras enable ansible2
-      #       yum clean metadata
-      #       yum install -y ansible
       - run:
           name: Get backend url
           command: |
@@ -331,7 +321,7 @@ jobs:
             cd .circleci/ansible
             echo "Contents of the inventory.txt file is ------"
             cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml 0\
+            ansible-playbook -i inventory.txt deploy-backend.yml \
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
       - destroy-environment
