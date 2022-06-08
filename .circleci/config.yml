@@ -221,7 +221,6 @@ jobs:
     docker:
       # Docker image here that supports NodeJS
       - image: python:3.10-alpine3.16
-      # - image: amazon/aws-cli
     steps:
       # Checkout code from git
       - checkout
@@ -240,6 +239,7 @@ jobs:
             cd backend
             npm install
             npm run migrations > migrations_dump.txt
+            cat migrations_dump.txt
       - run:
           name: Send migration results to kvdb
           command: |
@@ -254,24 +254,29 @@ jobs:
   deploy-frontend:
     docker:
       # Docker image here that supports AWS CLI
-      - image: amazon/aws-cli
+      # - image: amazon/aws-cli
+      - image: python:3.10-alpine3.16
     steps:
       # Checkout code from git
       - checkout
       - run:
-          name: Update yum
+          name: Install deps
           command: |
-            yum update -y
-      - run:
-          name: Install other dependencies
-          command: |
-            yum install -y python3 nodejs npm
-      - run:
-          name: Enable the ansible repo
-          command: |
-            amazon-linux-extras enable ansible2
-            yum clean metadata
-            yum install -y ansible
+            apk add --update --no-cache tar gzip nodejs npm ansible  aws-cli
+      # - run:
+      #     name: Update yum
+      #     command: |
+      #       yum update -y
+      # - run:
+      #     name: Install other dependencies
+      #     command: |
+      #       yum install -y python3 nodejs npm
+      # - run:
+      #     name: Enable the ansible repo
+      #     command: |
+      #       amazon-linux-extras enable ansible2
+      #       yum clean metadata
+      #       yum install -y ansible
       - run:
           name: Get backend url
           command: |
@@ -329,6 +334,7 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml 0\
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
+      - destroy-environment
 
 #   smoke-test:
 #     docker:
