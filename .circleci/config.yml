@@ -236,7 +236,7 @@ jobs:
           name: Install node
           command: |
             yum update -y
-            yum install nodejs npm -y
+            yum install nodejs npm -y --enablerepo=epel-testing
       - run:
           name: Run migrations
           command: |
