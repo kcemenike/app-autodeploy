@@ -287,7 +287,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
-            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            echo "API_URL=http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
           name: Deploy frontend objects
@@ -321,7 +321,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip ansible aws-cli nodejs npm tree
+            apk add --update --no-cache tar gzip ansible aws-cli nodejs npm
       - run:
           name: Deploy backend
           command: |
@@ -331,8 +331,7 @@ jobs:
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
-            pwd
-            tree -afC /root/project/ -I *node_modules*
+            # tree -afC /root/project/ -I *node_modules*
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
@@ -372,6 +371,7 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
+            echo curl -s $API_URL/api/status
             if curl -s $API_URL/api/status | grep "ok"
             then
                 return 0
@@ -393,10 +393,10 @@ jobs:
             fi
             # your code here
       # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # - destroy-environment:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # - revert-migrations:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   cloudfront-update:
     docker:
@@ -483,7 +483,7 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
-      - cloudfront-update:
-          requires: [smoke-test]
+      # - cloudfront-update:
+      #     requires: [smoke-test]
       # - cleanup:
       #     requires: [cloudfront-update]
