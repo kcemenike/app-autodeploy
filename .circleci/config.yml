@@ -348,7 +348,7 @@ jobs:
   smoke-test:
     docker:
       # Lightweight Docker image
-      - image: alpine:latest
+      - image: python:3.10-alpine3.16
     steps:
       # Checkout code from git
       - checkout
@@ -367,6 +367,7 @@ jobs:
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL: ${API_URL}"
             echo ${API_URL}/api/status
+            curl -s ${API_URL}/api/status
       - run:
           name: Backend smoke test.
           command: |
