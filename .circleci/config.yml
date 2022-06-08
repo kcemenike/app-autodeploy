@@ -244,32 +244,53 @@ jobs:
             then
               curl https://kvdb.io/R71dwYJde13mFe8KaaK9Ke/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
               curl --insecure https://kvdb.io/R71dwYJde13mFe8KaaK9Ke/migration_${CIRCLE_WORKFLOW_ID:0:7} 1%
-
             fi
             exit 1
       # Here's where you will add some code to rollback on failure
       - destroy-environment
 
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure
+  deploy-frontend:
+    docker:
+      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Update yum
+          command: |
+            yum update -y
+      - run:
+          name: Enable the ansible repo
+          command: |
+            amazon-linux-extras enable ansible2
+            yum install -y ansible
+      - run:
+          name: Install other dependencies
+          command: |
+            yum install -y python3 nodejs npm
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            export BACKEND_IP=$(aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            # your code here
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
 
 #   deploy-backend:
 #     docker:
