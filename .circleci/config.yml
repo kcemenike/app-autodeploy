@@ -17,9 +17,10 @@ commands:
           command: |
             echo "Destroying environment: << parameters.workflow_id >>"
             aws cloudformation delete-stack \
-            --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+            --stack-name udapeople-backend-<<parameters.workflow_id>>
+            aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack \
-            --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            --stack-name udapeople-frontend-<<parameters.workflow_id>>
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -194,7 +195,7 @@ jobs:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: ''
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   configure-infrastructure:
     docker:
@@ -223,7 +224,7 @@ jobs:
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: ''
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   run-migrations:
     docker:
@@ -259,7 +260,7 @@ jobs:
             fi
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: ''
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   deploy-frontend:
     docker:
@@ -298,7 +299,9 @@ jobs:
             # your code here
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: ''
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   deploy-backend:
     docker:
@@ -329,7 +332,8 @@ jobs:
             tar -C backend -czvf artifact.tar.gz .
             pwd
             tree -afC /root/project/ -I *node_modules*
-            cp artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
             echo "Contents of the inventory.txt file is ------"
             cat inventory.txt
@@ -337,7 +341,9 @@ jobs:
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
-          workflow_id: ''
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   smoke-test:
     docker:
@@ -385,6 +391,10 @@ jobs:
             fi
             # your code here
       # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   cloudfront-update:
     docker:
@@ -408,11 +418,10 @@ jobs:
             --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
             --tags project=udapeople
       # Here's where you will add some code to rollback on failure
-      - run:
-          name: Rollback on failure
-          when: on_fail
-          command: |
-            echo "Job failed"
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 # cleanup:
 #   docker:
