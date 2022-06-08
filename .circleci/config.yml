@@ -355,8 +355,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache curl nodejs npm tar gzip aws-cli
-            # your code here
+            apk add --update --no-cache curl aws-cli
       - run:
           name: Get backend url
           command: |
@@ -371,8 +370,8 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            echo ${API_URL}
-            echo ${BACKEND_IP}
+            echo API_URL ${API_URL}
+            echo BACKEND_IP ${BACKEND_IP}
             echo ${API_URL}/api/status
             curl -s ${API_URL}/api/status
             if curl -s $API_URL/api/status | grep "ok"
@@ -381,7 +380,6 @@ jobs:
             else
                 return 1
             fi
-            # your code here
       - run:
           name: Frontend smoke test.
           command: |
@@ -394,7 +392,6 @@ jobs:
             else
               return 1
             fi
-            # your code here
       # Here's where you will add some code to rollback on failure
       # - destroy-environment:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
