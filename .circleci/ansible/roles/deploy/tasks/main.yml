@@ -21,9 +21,14 @@
     global: yes
     state: latest
     production: yes
+- name: where ami
+  shell: |
+    whoami
+    ls -al
+    pwd
 
 - name: extract artifact
-  become: no
+  become: yes
   unarchive:
     src: ~/artifact.tar.gz
     dest: .

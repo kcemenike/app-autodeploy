@@ -334,8 +334,8 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml \
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          workflow_id: ''
+      # - destroy-environment:
+      #     workflow_id: ''
 
   smoke-test:
     docker:
