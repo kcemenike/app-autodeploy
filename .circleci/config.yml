@@ -193,7 +193,8 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure
-      - destroy-environment
+      - destroy-environment:
+          workflow_id: ''
 
   configure-infrastructure:
     docker:
@@ -221,7 +222,8 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml \
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
-      - destroy-environment
+      - destroy-environment:
+          workflow_id: ''
 
   run-migrations:
     docker:
@@ -256,7 +258,8 @@ jobs:
               curl https://kvdb.io/R71dwYJde13mFe8KaaK9Ke/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
       # Here's where you will add some code to rollback on failure
-      - destroy-environment
+      - destroy-environment:
+          workflow_id: ''
 
   deploy-frontend:
     docker:
@@ -294,7 +297,8 @@ jobs:
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             # your code here
       # Here's where you will add some code to rollback on failure
-      - destroy-environment
+      - destroy-environment:
+          workflow_id: ''
 
   deploy-backend:
     docker:
@@ -329,7 +333,8 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml \
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
       # Here's where you will add some code to rollback on failure
-      - destroy-environment
+      - destroy-environment:
+          workflow_id: ''
 
   smoke-test:
     docker:
@@ -452,7 +457,7 @@ workflows:
       - deploy-backend:
           requires: [run-migrations]
       - smoke-test:
-        requires: [deploy-backend, deploy-frontend]
+          requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
       # - cleanup:
