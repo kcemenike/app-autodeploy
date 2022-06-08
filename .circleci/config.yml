@@ -248,14 +248,14 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: python:3.10-alpine3.16
+      - image: circleci/node:14
     steps:
       # Checkout code from git
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update --no-cache tar gzip nodejs npm  aws-cli
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       apk add --update --no-cache tar gzip nodejs npm  aws-cli
       - restore_cache:
           keys: [backend-build-v2]
       - run:
@@ -264,7 +264,7 @@ jobs:
             cd backend
             npm install
             npm run build
-            npm run migrations > migrations_dump.txt
+            npm run migrations >> migrations_dump.txt
             ls -al
             cat migrations_dump.txt
       - run:
