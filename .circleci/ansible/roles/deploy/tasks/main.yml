@@ -25,7 +25,7 @@
 - name: extract artifact
   become: yes
   unarchive:
-    src: ~/artifact.tar.gz
+    src: /home/ubuntu/artifact.tar.gz
     dest: .
 
 - name: start app
