@@ -3,14 +3,15 @@ Description: >
 
 Parameters:
   WorkflowID:
-    Description: Unique identifier.
+    Description: |
+      Unique identifier. (currently udapeople-kelechi1).
+      Run with:
+      `aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=udapeople-kelechi1`
     Type: String
 
-
 Resources:
-  
   CloudFrontOriginAccessIdentity:
-    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: Origin Access Identity for Serverless Static Website
@@ -20,10 +21,10 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "udapeople-${WorkflowID}.s3.amazonaws.com"
+          - DomainName: !Sub 'udapeople-${WorkflowID}.s3.amazonaws.com'
             Id: webpage
             S3OriginConfig:
-              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
         Enabled: True
         DefaultRootObject: index.html
         DefaultCacheBehavior:
