@@ -328,7 +328,7 @@ jobs:
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             pwd
-            tree /root/project/
+            tree -afC /root/project/ -I *node_modules*
             cp artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
             echo "Contents of the inventory.txt file is ------"
