@@ -232,6 +232,8 @@ jobs:
           command: |
             yum update -y
             amazon-linux-extras enable epel
+            yum clean metadata
+            yum install epel-release
             yum install nodejs npm -y
       - run:
           name: Run migrations
@@ -269,6 +271,7 @@ jobs:
           name: Enable the ansible repo
           command: |
             amazon-linux-extras enable ansible2
+            yum clean metadata
             yum install -y ansible
       - run:
           name: Get backend url
