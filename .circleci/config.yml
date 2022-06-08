@@ -360,18 +360,20 @@ jobs:
       - run:
           name: Get backend url
           command: |
+            export CIRCLE_WORKFLOW_ID=8fd7ebe5-5545-4bd9-81c4-257702ce0d04
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
             --output text)
-            export API_URL="http://$BACKEND_IP:3030"
-            echo "API_URL: $API_URL"
-            echo $API_URL
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL: ${API_URL}"
+            echo ${API_URL}
             # your code here
       - run:
           name: Backend smoke test.
           command: |
-            echo curl -s $API_URL/api/status
+            echo $API_URL/api/status
+            curl -s ${API_URL}/api/status
             if curl -s $API_URL/api/status | grep "ok"
             then
                 return 0
@@ -458,31 +460,35 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - test-backend:
-      #     requires: [build-backend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      - deploy-infrastructure:
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      # - build-frontend
+      # - build-backend
+      # # - test-frontend:
+      # #     requires: [build-frontend]
+      # # - test-backend:
+      # #     requires: [build-backend]
+      # # - scan-backend:
+      # #     requires: [build-backend]
+      # # - scan-frontend:
+      # #     requires: [build-frontend]
+      # - deploy-infrastructure:
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: [test-feature-branch, master]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      # - deploy-backend:
+      #     requires: [run-migrations]
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
+      - smoke-test:
           filters:
             branches:
-              only: [test-feature-branch, master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+              only: [master]
       # - cloudfront-update:
       #     requires: [smoke-test]
       # - cleanup:
