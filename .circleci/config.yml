@@ -182,6 +182,7 @@ jobs:
             ls ~
             echo $(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
             --output text) >> ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
@@ -233,7 +234,7 @@ jobs:
             yum update -y
             amazon-linux-extras enable epel
             yum clean metadata
-            yum install epel-release
+            yum install epel-release -y
             yum install nodejs npm -y
       - run:
           name: Run migrations
@@ -279,6 +280,7 @@ jobs:
             # your code here
             export BACKEND_IP=$(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
