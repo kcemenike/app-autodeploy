@@ -378,8 +378,17 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL: ${API_URL}"
-
-            if curl "${API_URL}/api/status" | grep "ok"
+            n=0
+            until [ "$n" -ge 5 ]
+            do
+              res=curl "${API_URL}/api/status"
+              echo $res
+              break
+              n=$((n+1))
+              sleep 1
+            done
+            if
+              $res | grep "ok"
             then
                 return 0
             else
