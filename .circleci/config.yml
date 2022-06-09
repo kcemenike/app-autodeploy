@@ -435,7 +435,7 @@ jobs:
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
             --stack-name InitialStack \
-            --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
             --tags project=udapeople
             echo OldWorkflowID=${OldWorkflowID}
             echo Current Workflow ID: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -461,7 +461,8 @@ jobs:
               --no-paginate --output text)
             echo OldWorkflowID: ${OldWorkflowID}
             echo CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID:0:7}
-            export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+            export STACKS=$(aws cloudformation list-stacks \
+            --query "StackSummaries[*].StackName" \
             --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
       - run:
           name: Remove old stacks and files
@@ -469,9 +470,10 @@ jobs:
             # if [[ "${OldWorkflowID}" != "${OldWorkflowID}" ]]
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              echo #{OldWorkflowID}
+              # aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              # aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             else
               echo ------------ Cannot cleanup stacks --------------
             fi
@@ -479,34 +481,34 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
-      - scan-backend:
-          requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
+      # - build-frontend
+      # - build-backend
+      # - test-frontend:
+      #     requires: [build-frontend]
+      # - test-backend:
+      #     requires: [build-backend]
+      # - scan-backend:
+      #     requires: [build-backend]
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      # # - deploy-infrastructure:
+      # #     requires: [build-frontend, build-backend]
       # - deploy-infrastructure:
-      #     requires: [build-frontend, build-backend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [test-feature-branch, master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      # - cleanup:
+      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: [test-feature-branch, master]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      # - deploy-backend:
+      #     requires: [run-migrations]
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
+      # - cloudfront-update:
+      #     requires: [smoke-test]
+      - cleanup
       #     requires: [cloudfront-update]
