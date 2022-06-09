@@ -332,7 +332,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip ansible aws-cli nodejs npm
+            apk add --update --no-cache tar gzip nodejs npm tree
+            apk add --update --no-cache openssh-client ansible zip
+            pip install awscli
       - run:
           name: Deploy backend
           command: |
@@ -342,11 +344,11 @@ jobs:
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
-            # tree -afC /root/project/ -I *node_modules*
+            tree -afC /root/project/.circleci -I *node_modules*
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
-            echo "Contents of the inventory.txt file is ------"
+            echo "Contents of the inventory.txt file is ------$(tail -1 inventory.txt)"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml \
             --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
