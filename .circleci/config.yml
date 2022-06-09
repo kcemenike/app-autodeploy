@@ -220,18 +220,18 @@ jobs:
           name: Configure server
           command: |
             # add environment variables to server
-            # echo ENVIRONMENT=production > backend/.env
-            # echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
-            # echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
-            # echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
-            # echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
-            # echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
-            # echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
-            # echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
-            # echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
-            # echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+            echo ENVIRONMENT=production > backend/.env
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
 
-            # cat backend/.env
+            cat backend/.env
 
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml \
@@ -379,19 +379,9 @@ jobs:
             --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL: ${API_URL}"
-            n=0
-            until [ "$n" -ge 5 ]
-            do
-              echo $n
-              res=curl "${API_URL}/api/status"
-              echo $res
-              break
-              n=$((n+1))
-              sleep 1
-            done
+            echo "${API_URL}"
             if
-              $res | grep "ok"
+              curl "${API_URL}/api/status" | grep "ok"
             then
                 return 0
             else
