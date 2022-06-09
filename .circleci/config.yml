@@ -372,7 +372,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache curl aws-cli tar gzip
+            apk add --update --no-cache curl aws-cli tar gzip nodejs npm
       - attach_workspace:
           at: ~/
       - run:
@@ -420,6 +420,7 @@ jobs:
           name: Install dependencies
           command: |
             yum install tar gzip -y
+            yum install npm nodejs -y
             # your code here
       - run:
           name: Update cloudfront distribution
