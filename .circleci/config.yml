@@ -35,7 +35,8 @@ commands:
           # Add when this will run
           command: |
             # # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            # SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
+            SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
+            echo $SUCCESS
             # if(( $SUCCESS==1 )); 
             # then
             #   cd ~/project/backend
@@ -421,9 +422,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            yum install tar gzip -y
-            yum install npm nodejs -y
-            # your code here
+            yum install tar gzip npm nodejs -y
       - run:
           name: Update cloudfront distribution
           command: |
