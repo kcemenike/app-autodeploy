@@ -54,7 +54,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build-v4]
+          keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -63,7 +63,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-v4
+          key: frontend-build
 
   build-backend:
     docker:
@@ -71,7 +71,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build-v4]
+          keys: [backend-build]
       - run:
           name: Back-end build
           command: |
@@ -80,7 +80,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-v4
+          key: backend-build
 
   test-frontend:
     docker:
@@ -91,7 +91,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v4]
+          keys: [frontend-build]
       # Your job code here
       - run:
           name: Test frontend
@@ -109,7 +109,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v4]
+          keys: [backend-build]
       # Your job code here
       - run:
           name: Test backend
@@ -127,7 +127,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v4]
+          keys: [frontend-build]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -146,7 +146,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v4]
+          keys: [backend-build]
       # Your job code here
       - run:
           name: Analyse backend
@@ -221,7 +221,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-build-v4]
+          keys: [backend-build]
       - run:
           name: Configure server
           command: |
@@ -253,12 +253,16 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: circleci/node:13.8.0
+      - image: python:3.10-alpine3.16
     steps:
       # Checkout code from git
       - checkout
+      - run:
+          name: Install deps
+          command: |
+            apk add --update --no-cache tar gzip nodejs npm aws-cli
       - restore_cache:
-          keys: [backend-build-v4]
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
@@ -273,7 +277,7 @@ jobs:
           command: |
             if grep -q "migrations" ~/project/backend/migrations_dump.txt
             then
-              curl https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
+              curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
@@ -337,9 +341,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip nodejs npm tree
-            apk add --update --no-cache openssh-client ansible zip
-            pip install awscli
+            apk add --update --no-cache tar gzip nodejs npm tree aws-cli ansible
       - run:
           name: Deploy backend
           command: |
@@ -385,8 +387,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            if
-              curl "${API_URL}/api/status" | grep "ok"
+            if curl "${API_URL}/api/status" | grep "ok"
             then
                 return 0
             else
