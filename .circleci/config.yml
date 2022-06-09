@@ -1,7 +1,12 @@
 version: 2.1
-
+# aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=kelechi1
 orbs:
   slack: circleci/slack@4.1
+
+parameters:
+  workflow_id:
+    type: string
+    default: '${CIRCLE_WORKFLOW_ID}'
 
 commands:
   destroy-environment:
@@ -459,6 +464,7 @@ jobs:
             export OldWorkflowID=$(aws cloudformation list-exports \
               --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
+            # export OldWorkflowID=<<pipeline.parameters.workflow_id>>
             echo OldWorkflowID: ${OldWorkflowID}
             echo CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID:0:7}
             export STACKS=$(aws cloudformation list-stacks \
@@ -467,9 +473,11 @@ jobs:
             # if [[ "${OldWorkflowID}" != "${OldWorkflowID}" ]]
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              # we need to remove kelechi1!!!
+              echo OldWorkflowID $OldWorkflowID Stacks ${STACKS[@]} who "<<pipeline.parameters.workflow_id>>"
+              # aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              # aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              # aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             else
               echo ------------ Cannot cleanup stacks --------------
             fi
