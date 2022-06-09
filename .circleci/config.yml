@@ -55,7 +55,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build-1]
+          keys: [frontend-build-v2]
       - run:
           name: Build front-end
           command: |
@@ -64,7 +64,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-1
+          key: frontend-build-v2
 
   build-backend:
     docker:
@@ -72,7 +72,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build-1]
+          keys: [backend-build-v2]
       - run:
           name: Back-end build
           command: |
@@ -81,7 +81,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-1
+          key: backend-build-v2
 
   test-frontend:
     docker:
@@ -92,7 +92,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-1]
+          keys: [frontend-build-v2]
       # Your job code here
       - run:
           name: Test frontend
@@ -110,7 +110,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-1]
+          keys: [backend-build-v2]
       # Your job code here
       - run:
           name: Test backend
@@ -128,7 +128,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-1]
+          keys: [frontend-build-v2]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -147,7 +147,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-1]
+          keys: [backend-build-v2]
       # Your job code here
       - run:
           name: Analyse backend
@@ -222,7 +222,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-build-1]
+          keys: [backend-build-v2]
       - run:
           name: Configure server
           command: |
@@ -263,7 +263,7 @@ jobs:
           command: |
             apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       - restore_cache:
-          keys: [backend-build-1]
+          keys: [backend-build-v2]
       - run:
           name: Run migrations
           command: |
