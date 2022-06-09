@@ -430,7 +430,7 @@ jobs:
             --query "Exports[?Name==\`WorkflowID\`].Value" \
             --no-paginate --output text)
             echo $OldWorkflowID >> ~/OldWorkflowID.txt
-            cat $OldWorkflowID.txt
+            cat ~/OldWorkflowID.txt
             # Change the initial stack name, as applicable to you
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
