@@ -396,7 +396,7 @@ jobs:
             else
               return 1
             fi
-      Here's where you will add some code to rollback on failure
+
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
