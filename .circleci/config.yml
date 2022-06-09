@@ -44,6 +44,7 @@ commands:
             # fi
             cd ~/project/backend
             npm install
+            npm build
             npm run migration:revert
 
 jobs:
@@ -270,7 +271,7 @@ jobs:
       - run:
           name: Send migration results to kvdb
           command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            if grep -q "migrations" ~/project/backend/migrations_dump.txt
             then
               curl https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
