@@ -390,9 +390,9 @@ jobs:
             echo "${API_URL}"
             if curl -s "${API_URL}/api/status"
             then
-                return 0
-            else
                 return 1
+            else
+                return 0
             fi
       - run:
           name: Frontend smoke test.
@@ -402,13 +402,13 @@ jobs:
             if curl ${URL} | grep "Welcome"
             then
               # Change this to 0 after the job fails
-              return 0
+              return 1
             else
               return 1
             fi
 
-      # - destroy-environment:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
