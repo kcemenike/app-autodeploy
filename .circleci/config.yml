@@ -359,7 +359,7 @@ jobs:
   smoke-test:
     docker:
       # Lightweight Docker image
-      - image: alpine:latest
+      - image: python:3.10-alpine3.16
     steps:
       # Checkout code from git
       - checkout
@@ -381,6 +381,7 @@ jobs:
             n=0
             until [ "$n" -ge 5 ]
             do
+              echo $n
               res=curl "${API_URL}/api/status"
               echo $res
               break
