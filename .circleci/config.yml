@@ -34,14 +34,17 @@ commands:
           when: on_fail
           # Add when this will run
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
-            if(( $SUCCESS==1 )); 
-            then
-              cd ~/project/backend
-              npm install
-              npm run migration:revert
-            fi
+            # # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+            # SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
+            # if(( $SUCCESS==1 )); 
+            # then
+            #   cd ~/project/backend
+            #   npm install
+            #   npm run migration:revert
+            # fi
+            cd ~/project/backend
+            npm install
+            npm run migration:revert
 
 jobs:
   build-frontend:
@@ -50,7 +53,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build-v3]
+          keys: [frontend-build-v4]
       - run:
           name: Build front-end
           command: |
@@ -59,7 +62,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-v3
+          key: frontend-build-v4
 
   build-backend:
     docker:
@@ -67,7 +70,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build-v4]
       - run:
           name: Back-end build
           command: |
@@ -76,7 +79,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-v3
+          key: backend-build-v4
 
   test-frontend:
     docker:
@@ -87,7 +90,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v3]
+          keys: [frontend-build-v4]
       # Your job code here
       - run:
           name: Test frontend
@@ -105,7 +108,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build-v4]
       # Your job code here
       - run:
           name: Test backend
@@ -123,7 +126,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v3]
+          keys: [frontend-build-v4]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -142,7 +145,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build-v4]
       # Your job code here
       - run:
           name: Analyse backend
@@ -217,23 +220,22 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build-v4]
       - run:
           name: Configure server
           command: |
-            # add environment variables to server
-            echo ENVIRONMENT=production > backend/.env
-            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
-            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
-            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
-            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
-            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
-            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
-
-            cat backend/.env
+            # # add environment variables to server
+            # echo ENVIRONMENT=production > backend/.env
+            # echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+            # echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+            # echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+            # echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+            # echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
+            # echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
+            # echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+            # echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+            # echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+            # cat backend/.env
 
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml \
@@ -255,7 +257,7 @@ jobs:
       # Checkout code from git
       - checkout
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build-v4]
       - run:
           name: Run migrations
           command: |
