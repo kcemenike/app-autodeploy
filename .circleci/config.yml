@@ -492,7 +492,9 @@ jobs:
       - run:
           name: Install deps
           command: |
-            apk add --update aws-cli tar gzip ansible
+            apk add --update aws-cli tar gzip ansible nodejs npm
+      - restore_cache:
+          keys: [backend-build-v2]
       - attach_workspace:
           at: ~/
       - run:
