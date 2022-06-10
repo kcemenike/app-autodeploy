@@ -492,7 +492,7 @@ jobs:
       - run:
           name: Install deps
           command: |
-            apk add --update aws-cli tar gzip
+            apk add --update aws-cli tar gzip ansible
       - attach_workspace:
           at: ~/
       - run:
