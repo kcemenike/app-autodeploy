@@ -473,13 +473,40 @@ jobs:
             # if [[ "${OldWorkflowID}" != "${OldWorkflowID}" ]]
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              export OldWorkflowID="kelechi1"
+              # export OldWorkflowID="kelechi1"
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             else
               echo ------------ Cannot cleanup stacks --------------
             fi
+
+  add-prometheus-node-exporter:
+    docker:
+      - image: python:3.10-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+      - run:
+          name: Install deps
+          command: |
+            apk add --update aws-cli tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt node-exporter.yml \
+            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:
@@ -511,5 +538,7 @@ workflows:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
       #     requires: [smoke-test]
-      - cleanup
-        # requires: [cloudfront-update]
+      - add-prometheus-node-exporter
+        # requires: [smoke-test]
+      # - cleanup:
+      #   requires: [cloudfront-update]
