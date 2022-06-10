@@ -544,4 +544,4 @@ workflows:
       - add-prometheus-node-exporter:
           requires: [smoke-test]
       - cleanup:
-        requires: [cloudfront-update]
+          requires: [cloudfront-update]
