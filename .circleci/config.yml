@@ -393,6 +393,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
+            curl "${API_URL}/api/status"
             if curl -s "${API_URL}/api/status"
             then
                 return 0
@@ -536,11 +537,11 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      - add-prometheus-node-exporter:
-          requires: [smoke-test]
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update
+        # requires: [smoke-test]
+      - add-prometheus-node-exporter
+        # requires: [smoke-test]
       # - cleanup:
       #   requires: [cloudfront-update]
