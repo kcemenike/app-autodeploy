@@ -218,7 +218,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
       - run:
           name: Install dependencies
           command: |
@@ -246,7 +246,7 @@ jobs:
 
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml \
-            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde
       # save backend back to workspace
       - persist_to_workspace:
           root: ~/
@@ -340,7 +340,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
       # attach workspace
       - attach_workspace:
           at: ~/
@@ -364,7 +364,7 @@ jobs:
             echo "Contents of the inventory.txt file is ------$(tail -1 inventory.txt)"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml \
-            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -489,7 +489,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
       - run:
           name: Install deps
           command: |
@@ -504,7 +504,7 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt node-exporter.yml \
-            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -537,15 +537,11 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      # - smoke-test:
-      #     requires: [deploy-backend, deploy-frontend]
-      # - cloudfront-update:
-      #     requires: [smoke-test]
-      # - add-prometheus-node-exporter:
-      #     requires: [smoke-test]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
-          requires: [run-migrations]
+          requires: [smoke-test]
       - add-prometheus-node-exporter:
-          requires: [run-migrations]
+          requires: [smoke-test]
       # - cleanup:
       #   requires: [cloudfront-update]
