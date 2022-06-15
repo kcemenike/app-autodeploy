@@ -51,7 +51,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build-v3]
+          keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -60,7 +60,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-v3
+          key: frontend-build
 
   build-backend:
     docker:
@@ -68,7 +68,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build]
       - run:
           name: Back-end build
           command: |
@@ -77,7 +77,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-v3
+          key: backend-build
 
   test-frontend:
     docker:
@@ -88,7 +88,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v3]
+          keys: [frontend-build]
       # Your job code here
       - run:
           name: Test frontend
@@ -106,7 +106,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build]
       # Your job code here
       - run:
           name: Test backend
@@ -124,7 +124,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v3]
+          keys: [frontend-build]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -143,7 +143,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build]
       # Your job code here
       - run:
           name: Analyse backend
@@ -218,7 +218,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build]
       - run:
           name: Configure server
           command: |
@@ -259,7 +259,7 @@ jobs:
           command: |
             apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
@@ -384,7 +384,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            # curl "${API_URL}/api/status"
+            curl "${API_URL}/api/status"
             if curl -s http://google.com
             then
                 return 0
@@ -403,8 +403,8 @@ jobs:
             else
               return 1
             fi
-      # - destroy-environment:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
@@ -486,7 +486,7 @@ jobs:
           command: |
             apk add --update aws-cli tar gzip ansible nodejs npm
       - restore_cache:
-          keys: [backend-build-v3]
+          keys: [backend-build]
       - attach_workspace:
           at: ~/
       - run:
@@ -534,5 +534,6 @@ workflows:
           requires: [smoke-test]
       - add-prometheus-node-exporter:
           requires: [smoke-test]
+      # Comment out the next 2 lines if you want to persist your infrastructure
       - cleanup:
-          requires: [add-prometheus-node-exporter]
+          requires: [add-prometheus-node-exporter, cloudfront-update]

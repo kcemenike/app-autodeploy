@@ -9,15 +9,15 @@ This project is a part of the Udacity Cloud DevOps nanodegree and execute the fo
 - Utilize a configuration management tool to accomplish deployment to cloud-based servers.
 - Surface critical server errors for diagnosis using centralized structured logging.
 
-![Diagram of CI/CD Pipeline we will be building.](udapeople.png)
-
 ### Instructions
 
-* [Selling CI/CD](instructions/0-selling-cicd.md)
-* [Getting Started](instructions/1-getting-started.md)
-* [Deploying Working, Trustworthy Software](instructions/2-deploying-trustworthy-code.md)
-* [Configuration Management](instructions/3-configuration-management.md)
-* [Turn Errors into Sirens](instructions/4-turn-errors-into-sirens.md)
+- Fork this repository and clone into your local device
+- Connect the repo to your CircleCI account
+- Create an S3 bucket that will hold the files in this repo (we will be deploying the repo in this bucket and switching blue to green using cloudfront). Take note of the name of this bucket (in my case, I used udapeople-kelechi1, where `kelechi1` is my workflowID)
+- Deploy the cloudfront distribution with the following command, replacing `WorkflowID` with your own bucket suffix  
+  `aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=kelechi1`
+- push the changes to git to fire up CI pipeline
+
 
 ### Built With 💓
 
