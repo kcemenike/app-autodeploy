@@ -40,8 +40,8 @@ commands:
           # Add when this will run
           command: |
             # # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            # SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
-            # echo $SUCCESS
+            SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
+            echo $SUCCESS
             # if(( $SUCCESS==1 )); 
             # then
             #   cd ~/project/backend
@@ -60,7 +60,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build-v2]
+          keys: [frontend-build-v3]
       - run:
           name: Build front-end
           command: |
@@ -69,7 +69,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-v2
+          key: frontend-build-v3
 
   build-backend:
     docker:
@@ -77,7 +77,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build-v3]
       - run:
           name: Back-end build
           command: |
@@ -86,7 +86,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-v2
+          key: backend-build-v3
 
   test-frontend:
     docker:
@@ -97,7 +97,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v2]
+          keys: [frontend-build-v3]
       # Your job code here
       - run:
           name: Test frontend
@@ -115,7 +115,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build-v3]
       # Your job code here
       - run:
           name: Test backend
@@ -133,7 +133,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v2]
+          keys: [frontend-build-v3]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -152,7 +152,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build-v3]
       # Your job code here
       - run:
           name: Analyse backend
@@ -227,7 +227,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build-v3]
       - run:
           name: Configure server
           command: |
@@ -268,7 +268,7 @@ jobs:
           command: |
             apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build-v3]
       - run:
           name: Run migrations
           command: |
@@ -495,7 +495,7 @@ jobs:
           command: |
             apk add --update aws-cli tar gzip ansible nodejs npm
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build-v3]
       - attach_workspace:
           at: ~/
       - run:
@@ -544,4 +544,4 @@ workflows:
       - add-prometheus-node-exporter:
           requires: [smoke-test]
       - cleanup:
-          requires: [cloudfront-update]
+          requires: [add-prometheus-node-exporter]
