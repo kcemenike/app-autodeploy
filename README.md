@@ -1,3 +1,5 @@
+[![kcemenike](https://circleci.com/gh/kcemenike/autodeploy-project.svg?style=svg)](https://app.circleci.com/pipelines/github/kcemenike/autodeploy-project)
+
 ## A complete CI/CD project
 
 This project is a part of the Udacity Cloud DevOps nanodegree and execute the following:
