@@ -384,7 +384,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            curl "${API_URL}/api/status"
+            # curl "${API_URL}/api/status"
             if curl -s http://google.com
             then
                 return 0
