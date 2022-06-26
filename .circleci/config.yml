@@ -77,18 +77,18 @@ jobs:
       - run:
           name: Get AWS params
           command: |
-            export vpc-id=$(aws ec2 describe-vpcs \
+            export vpcId=$(aws ec2 describe-vpcs \
             --query Vpcs[0].VpcId --output text)
-            export subnet-id=$(aws ec2 describe-subnets \
-              --filter Name=vpc-id,Values=$vpc-id --output text \
+            export subnetId=$(aws ec2 describe-subnets \
+              --filter Name=vpc-id,Values=$vpcId --output text \
               --query Subnets[0].SubnetId)
             export az=$(aws ec2 describe-subnets \
-              --filter Name=vpc-id,Values=$vpc-id --output text \
+              --filter Name=vpc-id,Values=$vpcId --output text \
               --query Subnets[0].AvailabilityZone)
 
             # Write values to env
-            echo vpd-id=$vpc-id >> ~/project/infra.env
-            echo subnet-id=$subnet-id >> ~/project/infra.env
+            echo vpd-id=$vpcId >> ~/project/infra.env
+            echo subnet-id=$subnetId >> ~/project/infra.env
             echo az=$az >> ~/project/infra.env
             echo image=ami-0cfa91bdbc3be780c >> ~/project/infra.env
             ls -al
@@ -111,6 +111,7 @@ jobs:
       - run:
           name: deploy database
           command: |
+            echo postgres-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
               --template-file ~/project/.circleci/files/database.yml \
               --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
@@ -129,14 +130,14 @@ jobs:
           name: deploy Prometheus
           command: |
             ls -al ~/
-            export vpc-id=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
-            export subnet-id=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
             export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
             aws cloudformation deploy --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7} \
               --template-file ~/project/.circleci/files/prometheusServer.yml \
               --capabilities CAPABILITY_IAM --parameter-overrides AuthEmail=$AuthEmail \
               EmailPassword=$EmailPassword FromEmail=$FromEmail ToEmail=$ToEmail \
-              VPC=$vpc-id AZ=$az Subnet=$subnet-id
+              VPC=$vpcId AZ=$az Subnet=$subnetId
 
   build-frontend:
     docker:
@@ -623,8 +624,14 @@ workflows:
           filters:
             branches:
               only: [master, dev-branch]
-      - build-frontend
-      - build-backend
+      - build-frontend:
+          filters:
+            branches:
+              only: [master]
+      - build-backend:
+          filters:
+            branches:
+              only: [master]
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
