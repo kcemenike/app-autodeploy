@@ -92,7 +92,6 @@ jobs:
             echo subnet-id=$subnetId >> ~/project/infra.env
             echo az=$az >> ~/project/infra.env
             echo image=ami-0cfa91bdbc3be780c >> ~/project/infra.env
-            ls -al
             cat ~/project/infra.env
       - persist_to_workspace:
           root: ~/
@@ -119,7 +118,7 @@ jobs:
             aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
               --template-file ~/project/.circleci/files/database.yml \
               --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
-              DBUsername=DBUsername DBPassword=$DBPassword \
+              DBUsername=DBUsername DBPassword=$DBPassword KeyPair=udacity \
               VPC=$vpcId AZ=$az Subnet=$subnetId
 
   deploy-prometheus-monitor:

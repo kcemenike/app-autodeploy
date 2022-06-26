@@ -103,6 +103,7 @@ Resources:
       EngineVersion: '13.4'
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
+      MultiAZ: 0
       Port: 5432
       PubliclyAccessible: 1
       VPCSecurityGroups:
