@@ -88,7 +88,7 @@ jobs:
               --query Subnets[0].AvailabilityZone)
 
             # Write values to env
-            echo vpd-id=$vpcId >> ~/project/infra.env
+            echo vpd-id=$vpcId > ~/project/infra.env
             echo subnet-id=$subnetId >> ~/project/infra.env
             echo az=$az >> ~/project/infra.env
             echo image=ami-0cfa91bdbc3be780c >> ~/project/infra.env
@@ -112,12 +112,15 @@ jobs:
       - run:
           name: deploy database
           command: |
+            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
             echo postgres-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
               --template-file ~/project/.circleci/files/database.yml \
               --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
               DBUsername=DBUsername DBPassword=$DBPassword \
-              VPC=$vpc-id AZ=$az Subnet=$subnet-id
+              VPC=$vpcId AZ=$az Subnet=$subnetId
 
   deploy-prometheus-monitor:
     docker:
@@ -617,6 +620,7 @@ workflows:
             branches:
               only: [master, dev-branch]
       - deploy-db:
+          requires: [blue-deployment]
           filters:
             branches:
               only: [master, dev-branch]
