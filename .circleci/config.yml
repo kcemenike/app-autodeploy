@@ -45,6 +45,35 @@ commands:
             npm run migrations:revert
 
 jobs:
+  create-starter-infra:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Initialise cloudfront
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --tags project=udapeople \
+              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:5}
+      - run:
+          name: get html file
+          command: |
+            curl -L html5example.com > index.html
+            curl
+      - run:
+          name: deploy initial bucket
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople \
+               --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:5} \
+               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
+      - run:
+          name: Copy index.html to bucket
+          command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5}/index.html
+
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -431,7 +460,7 @@ jobs:
             # Change the initial stack name, as applicable to you
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
-            --stack-name InitialStack \
+            --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:5} \
             --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
             --tags project=udapeople
             echo OldWorkflowID=${OldWorkflowID}
@@ -501,6 +530,10 @@ jobs:
 workflows:
   default:
     jobs:
+      - create-starter-infra:
+          filters:
+            branches:
+              only: [dev-branch]
       - build-frontend
       - build-backend
       - test-frontend:
@@ -530,7 +563,6 @@ workflows:
           requires: [smoke-test]
       - add-prometheus-node-exporter:
           requires: [smoke-test]
-      # Comment out the next 2 lines if you want to persist your infrastructure
       - approve:
           type: approval
           requires: [cloudfront-update, add-prometheus-node-exporter]
