@@ -45,7 +45,7 @@ commands:
             npm run migrations:revert
 
 jobs:
-  create-starter-infra:
+  blue-deployment:
     docker:
       - image: amazon/aws-cli
     steps:
@@ -74,6 +74,68 @@ jobs:
       - run:
           name: Copy index.html to bucket
           command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/index.html
+      - run:
+          name: Get AWS params
+          command: |
+            export vpc-id=$(aws ec2 describe-vpcs \
+            --query Vpcs[0].VpcId --output text)
+            export subnet-id=$(aws ec2 describe-subnets \
+              --filter Name=vpc-id,Values=$vpc-id --output text) \
+              --query Subnets[0].SubnetId
+            export az=$(aws ec2 describe-subnets \
+              --filter Name=vpc-id,Values=$vpc-id --output text) \
+              --query Subnets[0].AvailabilityZone
+
+            # Write values to env
+            echo vpd-id=$vpc-id >> ~/project/infra.env
+            echo subnet-id=$subnet-id >> ~/project/infra.env
+            echo az=$az >> ~/project/infra.env
+            echo image=ami-0cfa91bdbc3be780c >> ~/project/infra.env
+            ls -al
+            cat ~/project/infra.env
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.env
+
+  deploy-db:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: install deps
+          command: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: deploy database
+          command: |
+            echo "current dir"
+            ls -al .
+            echo "project dir"
+            ls -al ~/project
+
+  deploy-prometheus-monitor:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: deploy Prometheus
+          command: |
+            ls -al ~/
+            export vpc-id=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnet-id=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
+            aws cloudformation deploy --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7} \
+              --template-file ~/project/.circleci/files/prometheusServer.yml \
+              --capabilities CAPABILITY_IAM --parameter-overrides AuthEmail=$AuthEmail \
+              EmailPassword=$EmailPassword FromEmail=$FromEmail ToEmail=$ToEmail \
+              VPC=$vpc-id AZ=$az Subnet=$subnet-id
 
   build-frontend:
     docker:
@@ -528,13 +590,37 @@ jobs:
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
+  destroy-all:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Destroy all
+          command: |
+            export OldWorkflowID=$(aws cloudformation list-exports \
+              --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+            aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+            aws cloudformation delete-stack --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7}
+
 workflows:
   default:
     jobs:
-      - create-starter-infra:
+      - blue-deployment:
           filters:
             branches:
-              only: [dev-branch]
+              only: [master, dev-branch]
+      - deploy-db:
+          filters:
+            branches:
+              only: [master, dev-branch]
+      - deploy-prometheus-monitor:
+          requires: [blue-deployment]
+          filters:
+            branches:
+              only: [master, dev-branch]
       - build-frontend
       - build-backend
       - test-frontend:
@@ -569,3 +655,9 @@ workflows:
           requires: [cloudfront-update, add-prometheus-node-exporter]
       - cleanup:
           requires: [approve]
+      - destroy-all:
+          # requires: [blue-deployment, deploy-db, cleanup]
+          requires: [blue-deployment, deploy-db]
+          filters:
+            branches:
+              only: [master, dev-branch]

@@ -1,0 +1,345 @@
+Description: |
+  This template deploys prometheus in the VPC vpc-0492b2b84bd1a3194 (us-west-1)
+  To execute please run this:
+  aws cloudformation deploy --stack-name prometheus --template-file ${ThisFile.yml} --capabilities CAPABILITY_IAM \
+  --parameter-overrides AuthEmail=${YourGmailAddress} EmailPassword=${YourGmailPassword} FromEmail=${YourEmail} ToEmail=${AnyEmailDestination} \
+  VPC=${YourVPC} AZ=${YourAZ} Subnet=${YourSubnet}
+Parameters:
+  VPC:
+    Description: Deploy the instance in this VPC
+    Type: String
+    Default: vpc-0666ab7d6fe9ca219
+  Subnet:
+    Description: This subnet must already exist
+    Type: String
+    Default: subnet-03eb430d72e402806
+  AZ:
+    Description: Choose an AZ that corresponds to the Subnet in the !Subnet section
+    Type: String
+    Default: us-west-2c
+  KeyPair:
+    Description: |
+      Set a keypair you will use to connect to the instance
+      You can generate a keypair from CLI by running
+      `aws ec2 create-key-pair --key-name udacity >> udacity.pem`
+      where udacity is the name of the KeyPair
+      Read more here: https://docs.aws.amazon.com/cli/latest/reference/ec2/create-key-pair.html#examples
+    Type: String
+    Default: final
+  Image:
+    Description: |
+      The ID of the AMI (e.g. ami-0ee8244746ec5d6d4 for Ubuntu 20 deployed in us-west-2 )
+      ami-0cfa91bdbc3be780c for Ubuntu 18 in us-west-2
+    Type: String
+    Default: ami-0cfa91bdbc3be780c # ami-0ee8244746ec5d6d4
+  LocalIPAddress:
+    Description: This is your local IP address, it will be used to configure security group ingress
+    Type: String
+    Default: 0.0.0.0/0
+  AuthEmail:
+    Description: This is the email (Gmail only!) you will use to authenticate the account
+    Type: String
+  EmailPassword:
+    Description: |
+      This is the app password for your gmail account.
+      Get one here https://support.google.com/accounts/answer/185833?hl=en
+    Type: String
+  FromEmail:
+    Description: This is the email to send alerts from (usually same as AuthEmail)
+    Type: String
+  ToEmail:
+    Description: The recipient email for alerts
+    Type: String
+
+Resources:
+  # Security groups
+  myWebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for my Web Server Instance
+      VpcId: !Ref VPC # vpc-0492b2b84bd1a3194
+      SecurityGroupIngress:
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+          Description: Allows inbound comm on tcp port 80
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 9090
+          IpProtocol: tcp
+          ToPort: 9090
+          Description: Inbound for Prometheus
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 8000
+          IpProtocol: tcp
+          ToPort: 8000
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 9100
+          IpProtocol: tcp
+          ToPort: 9100
+          Description: Inbound for Prometheus Node Exporter
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 9093
+          IpProtocol: tcp
+          ToPort: 9093
+          Description: Inbound for Alert Manager
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+          Description: Allows inbound comm on SSH port
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: -1
+          IpProtocol: -1
+          ToPort: -1
+          Description: Allows outward communication on all ports
+  # INSTANCES
+  prometheusInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Image
+      InstanceType: t2.micro
+      AvailabilityZone: !Ref AZ # !Select [0, !GetAZs ] # You can manually set an availability zone
+      KeyName: !Ref KeyPair # udacity # Created with `aws ec2 create-key-pair --key-name udacity >> udacity.pem`
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref Subnet #subnet-0598050965729f2e9
+          GroupSet:
+            - !Ref myWebServerSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: '20'
+            DeleteOnTermination: true
+            Encrypted: false
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y
+          sudo apt upgrade -y
+          sudo apt install nginx -y
+          sudo systemctl start nginx
+          sudo systemctl enable nginx
+
+          sudo useradd --no-create-home --shell /bin/false prome
+          sudo useradd --no-create-home --shell /bin/false node_exporter
+          # Install Prometheus
+          sudo mkdir /etc/prometheus
+          sudo mkdir /var/lib/prometheus
+          # Download Prometheus and copy to /usr/local/bin
+          wget https://github.com/prometheus/prometheus/releases/download/v2.0.0/prometheus-2.0.0.linux-amd64.tar.gz
+          tar xvf prometheus-2.0.0.linux-amd64.tar.gz
+          sudo cp prometheus-2.0.0.linux-amd64/prometheus /usr/local/bin/
+          sudo cp prometheus-2.0.0.linux-amd64/promtool /usr/local/bin/
+          sudo chown prome:prome /usr/local/bin/prometheus
+          sudo chown prome:prome /usr/local/bin/promtool
+          sudo cp -r prometheus-2.0.0.linux-amd64/consoles /etc/prometheus
+          sudo cp -r prometheus-2.0.0.linux-amd64/console_libraries /etc/prometheus
+          sudo chown -R prome:prome /etc/prometheus/consoles
+          sudo chown -R prome:prome /etc/prometheus/console_libraries
+          sudo chown -R prome:prome /var/lib/prometheus
+          rm -rf prometheus-2.0.0.linux-amd64.tar.gz prometheus-2.0.0.linux-amd64
+          # Install node exporter
+          wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
+          tar xzf node_exporter-1.0.1.linux-amd64.tar.gz
+          sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/node_exporter
+          sudo chown -R node_exporter:node_exporter /usr/local/bin/node_exporter
+          rm -rf node_exporter-1.0.1.linux-amd64.tar.gz node_exporter-1.0.1.linux-amd64
+          # Install Alertmanager
+          wget https://github.com/prometheus/alertmanager/releases/download/v0.21.0/alertmanager-0.21.0.linux-amd64.tar.gz
+          tar xvfz alertmanager-0.21.0.linux-amd64.tar.gz
+          sudo cp alertmanager-0.21.0.linux-amd64/alertmanager /usr/local/bin/
+          sudo cp alertmanager-0.21.0.linux-amd64/amtool /usr/local/bin/
+          sudo mkdir /var/lib/alertmanager
+
+          rm -rf alertmanager-0.21.0.linux-amd64.tar.gz alertmanager-0.21.0.linux-amd64
+
+          # Configure node exporter service
+          sudo echo "[Unit]" >> /etc/systemd/system/node-exporter.service
+          sudo echo "Description=Prometheus Node Exporter Service" >> /etc/systemd/system/node-exporter.service
+          sudo echo "After=network.target" >> /etc/systemd/system/node-exporter.service
+          sudo echo "" >> /etc/systemd/system/node-exporter.service
+          sudo echo "[Service]" >> /etc/systemd/system/node-exporter.service
+          sudo echo "User=node_exporter" >> /etc/systemd/system/node-exporter.service
+          sudo echo "Group=node_exporter" >> /etc/systemd/system/node-exporter.service
+          sudo echo "Type=simple" >> /etc/systemd/system/node-exporter.service
+          sudo echo "ExecStart=/usr/local/bin/node_exporter" >> /etc/systemd/system/node-exporter.service
+          sudo echo "" >> /etc/systemd/system/node-exporter.service
+          sudo echo "[Install]" >> /etc/systemd/system/node-exporter.service
+          sudo echo "WantedBy=multi-user.target" >> /etc/systemd/system/node-exporter.service
+          # Configure prometheus service
+          sudo echo "[Unit]" >> /etc/systemd/system/prometheus.service
+          sudo echo "Description=Prometheus" >> /etc/systemd/system/prometheus.service
+          sudo echo "Wants=network-online.target" >> /etc/systemd/system/prometheus.service
+          sudo echo "After=network-online.target" >> /etc/systemd/system/prometheus.service
+          sudo echo "" >> /etc/systemd/system/prometheus.service
+          sudo echo "[Service]" >> /etc/systemd/system/prometheus.service
+          sudo echo "User=prome" >> /etc/systemd/system/prometheus.service
+          sudo echo "Group=prome" >> /etc/systemd/system/prometheus.service
+          sudo echo "Type=simple" >> /etc/systemd/system/prometheus.service
+          sudo echo "ExecStart=/usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml --storage.tsdb.path /var/lib/prometheus/ --web.console.templates=/etc/prometheus/consoles --web.console.libraries=/etc/prometheus/console_libraries" >> /etc/systemd/system/prometheus.service
+          sudo echo "" >> /etc/systemd/system/prometheus.service
+          sudo echo "[Install]" >> /etc/systemd/system/prometheus.service
+          sudo echo "WantedBy=multi-user.target" >> /etc/systemd/system/prometheus.service
+          # Configure Alertmanager service
+          sudo echo "[Unit]" >> /etc/systemd/system/alertmanager.service
+          sudo echo "Description=Alert Manager" >> /etc/systemd/system/alertmanager.service
+          sudo echo "Wants=network-online.target" >> /etc/systemd/system/alertmanager.service
+          sudo echo "After=network-online.target" >> /etc/systemd/system/alertmanager.service
+          sudo echo "" >> /etc/systemd/system/alertmanager.service
+          sudo echo "[Service]" >> /etc/systemd/system/alertmanager.service
+          sudo echo "User=prome" >> /etc/systemd/system/alertmanager.service
+          sudo echo "Group=prome" >> /etc/systemd/system/alertmanager.service
+          sudo echo "Type=simple" >> /etc/systemd/system/alertmanager.service
+          sudo echo "ExecStart=/usr/local/bin/alertmanager --config.file=/etc/prometheus/alertmanager.yml --storage.path=/var/lib/alertmanager" >> /etc/systemd/system/alertmanager.service
+          sudo echo "" >> /etc/systemd/system/alertmanager.service
+          sudo echo "Restart=always" >> /etc/systemd/system/alertmanager.service
+          sudo echo "[Install]" >> /etc/systemd/system/alertmanager.service
+          sudo echo "WantedBy=multi-user.target" >> /etc/systemd/system/alertmanager.service
+
+          # Create prometheus config
+          echo "global:" > prometheus.yml
+          echo "  scrape_interval: 15s" >> prometheus.yml
+          echo "  evaluation_interval: 15s" >> prometheus.yml
+          # Rule files
+          echo "rule_files:" >> prometheus.yml
+          echo "  - /etc/prometheus/rules.yml" >> prometheus.yml
+          # Alerts
+          echo "alerting:" >> prometheus.yml
+          echo "  alertmanagers:" >> prometheus.yml
+          echo "    - static_configs:" >> prometheus.yml
+          echo "      - targets:" >> prometheus.yml
+          echo "          - localhost:9093" >> prometheus.yml
+          # JOBS
+          echo "scrape_configs:" >> prometheus.yml
+          # prometheus job
+          # echo "  - job_name: 'prometheus'" >> prometheus.yml
+          # echo "    scrape_interval: 5s" >> prometheus.yml
+          # echo "    static_configs:" >> prometheus.yml
+          # echo "      - targets: ['localhost:9090']" >> prometheus.yml
+          # autodiscover EC2 instances job
+          echo "  - job_name: 'node'" >> prometheus.yml
+          echo "    ec2_sd_configs:" >> prometheus.yml
+          echo "      - region: us-west-2" >> prometheus.yml
+          echo "        access_key: ${IAMUserAccessKey}" >> prometheus.yml
+          echo "        secret_key: ${IAMUserAccessKey.SecretAccessKey}" >> prometheus.yml
+          echo "        port: 9100" >> prometheus.yml
+          # Reposition prometheus.yml
+          sudo mv prometheus.yml /etc/prometheus/prometheus.yml
+
+          # Create rules
+          echo "groups:" > /etc/prometheus/rules.yml
+          echo "- name: Down" >> /etc/prometheus/rules.yml
+          echo "  rules:" >> /etc/prometheus/rules.yml
+          echo "  - alert: InstanceDown" >> /etc/prometheus/rules.yml
+          echo "    expr: up == 0" >> /etc/prometheus/rules.yml
+          echo "    for: 3m" >> /etc/prometheus/rules.yml
+          echo "    labels:" >> /etc/prometheus/rules.yml
+          echo "      severity: 'critical'" >> /etc/prometheus/rules.yml
+          echo "    annotations:" >> /etc/prometheus/rules.yml
+          echo "      summary: 'Instance  is down'" >> /etc/prometheus/rules.yml
+          echo "      description: ' of job  has been down for more than 3 minutes.'" >> /etc/prometheus/rules.yml
+
+          # Create alertmanager config
+          echo "route:" > alertmanager.yml
+          echo "  group_by: [Alertname]" >> alertmanager.yml
+          echo "  receiver: email-me" >> alertmanager.yml
+          echo "" >> alertmanager.yml
+          echo "receivers:" >> alertmanager.yml
+          echo "  - name: email-me" >> alertmanager.yml
+          echo "    email_configs:" >> alertmanager.yml
+          echo "      - to: ${ToEmail}" >> alertmanager.yml
+          echo "        from: ${FromEmail}" >> alertmanager.yml
+          echo "        smarthost: smtp.gmail.com:587" >> alertmanager.yml
+          echo "        auth_username: ${AuthEmail}" >> alertmanager.yml
+          echo "        auth_identity: ${AuthEmail}" >> alertmanager.yml
+          echo "        auth_password: ${EmailPassword}" >> alertmanager.yml
+          # Reposition alertmanager.yml
+          sudo mv alertmanager.yml /etc/prometheus/alertmanager.yml
+          # csuzceqgjrskelub
+          # Alertmanager rules
+          echo "groups:" > rules.yml
+          echo "  - name: Down" >> rules.yml
+          echo "    rules:" >> rules.yml
+          echo "      - alert: InstanceDown" >> rules.yml
+          echo "        expr: up == 0" >> rules.yml
+          echo "        labels:" >> rules.yml
+          echo "          severity:" >> rules.yml
+          echo "        annotations:" >> rules.yml
+          echo "          summary: Instance is down" >> rules.yml
+          echo "          descriptions: of job has ben down for more than 3 minutes" >> rules.yml
+          # Reposition rules.yml
+          sudo mv rules.yml /etc/prometheus/rules.yml
+
+          # Enable and (Re)start services
+          sudo systemctl daemon-reload
+          sudo systemctl start prometheus
+          sudo systemctl enable prometheus
+          sudo systemctl enable node-exporter
+          sudo systemctl start node-exporter
+          sudo systemctl enable alertmanager
+          sudo systemctl start alertmanager
+      Tags:
+        - Key: Name
+          Value: Prometheus Server
+  # Roles
+  IAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      Path: '/'
+      Policies:
+        - PolicyName: AmazonEC2ReadOnlyAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:Describe*
+                  - elasticloadbalancing:Describe*
+                  - cloudwatch:List*
+                  - cloudwatch:Get*
+                  - cloudwatch:Describe*
+                  - autoscaling:Describe*
+                Resource: '*'
+  IAMUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref IAMUser
+
+Outputs:
+  Instance:
+    Description: EC2 instance
+    Value: !Ref prometheusInstance
+  PublicIP:
+    Description: Public IP Address
+    Value: !GetAtt prometheusInstance.PublicIp
+  PrometheusEndpoint:
+    Description: Prometheus Endpoint
+    Value:
+      !Join ['', ['http://', !GetAtt prometheusInstance.PublicDnsName, ':9090']]
+  PrometheusNodeExporterEndpoint:
+    Description: Prometheus Node Exporter Endpoint
+    Value:
+      !Join ['', ['http://', !GetAtt prometheusInstance.PublicDnsName, ':9100']]
+  PrometheusAlertManagerEndpoint:
+    Description: Prometheus Alert Manager Endpoint
+    Value:
+      !Join ['', ['http://', !GetAtt prometheusInstance.PublicDnsName, ':9093']]
+  AccessKeyID:
+    Description: Access Key for IAMUser
+    Value: !Ref IAMUserAccessKey
+  Secret:
+    Description: Secret Key for IAMUser
+    Value: !GetAtt IAMUserAccessKey.SecretAccessKey
+  EmailPwd:
+    Description: Email password
+    Value: !Ref EmailPassword
