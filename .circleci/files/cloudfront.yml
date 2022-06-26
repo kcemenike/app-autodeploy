@@ -4,9 +4,9 @@ Description: >
 Parameters:
   WorkflowID:
     Description: |
-      Unique identifier. (currently udapeople-kelechi1).
+      Unique identifier. (currently udapeople-kelechi123).
       Run with:
-      `aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=udapeople-kelechi1`
+      `aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=kelechi123`
     Type: String
 
 Resources:

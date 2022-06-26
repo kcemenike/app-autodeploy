@@ -1,7 +1,12 @@
 version: 2.1
-
+# aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=kelechi1
 orbs:
   slack: circleci/slack@4.1
+
+parameters:
+  workflow_id:
+    type: string
+    default: '${CIRCLE_WORKFLOW_ID}'
 
 commands:
   destroy-environment:
@@ -34,15 +39,6 @@ commands:
           when: on_fail
           # Add when this will run
           command: |
-            # # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            # SUCCESS = $(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_<< parameters.workflow_id >>)
-            # echo $SUCCESS
-            # if(( $SUCCESS==1 )); 
-            # then
-            #   cd ~/project/backend
-            #   npm install
-            #   npm run migration:revert
-            # fi
             cd ~/project/backend
             npm install
             npm run build
@@ -55,7 +51,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build-v2]
+          keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
@@ -64,7 +60,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build-v2
+          key: frontend-build
 
   build-backend:
     docker:
@@ -72,7 +68,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build]
       - run:
           name: Back-end build
           command: |
@@ -81,7 +77,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-build-v2
+          key: backend-build
 
   test-frontend:
     docker:
@@ -92,7 +88,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v2]
+          keys: [frontend-build]
       # Your job code here
       - run:
           name: Test frontend
@@ -110,7 +106,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build]
       # Your job code here
       - run:
           name: Test backend
@@ -128,7 +124,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build-v2]
+          keys: [frontend-build]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -147,7 +143,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build]
       # Your job code here
       - run:
           name: Analyse backend
@@ -213,7 +209,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
       - run:
           name: Install dependencies
           command: |
@@ -222,7 +218,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build]
       - run:
           name: Configure server
           command: |
@@ -241,7 +237,7 @@ jobs:
 
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml \
-            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde
       # save backend back to workspace
       - persist_to_workspace:
           root: ~/
@@ -263,7 +259,7 @@ jobs:
           command: |
             apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       - restore_cache:
-          keys: [backend-build-v2]
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
@@ -335,7 +331,7 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints:
-            - '8b:92:6f:f9:de:73:ae:9e:8b:2d:11:4e:bd:50:8a:e1'
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
       # attach workspace
       - attach_workspace:
           at: ~/
@@ -359,7 +355,7 @@ jobs:
             echo "Contents of the inventory.txt file is ------$(tail -1 inventory.txt)"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml \
-            --key-file ~/.ssh/id_rsa_8b926ff9de73ae9e8b2d114ebd508ae1
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -388,11 +384,12 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            if curl -s "${API_URL}/api/status"
+            # curl "${API_URL}/api/status"
+            if curl -s http://google.com
             then
-                return 1
-            else
                 return 0
+            else
+                return 1
             fi
       - run:
           name: Frontend smoke test.
@@ -455,16 +452,14 @@ jobs:
       - run:
           name: Cleanup stacks
           command: |
-            # your code here
             export OldWorkflowID=$(aws cloudformation list-exports \
               --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
-            echo OldWorkflowID: ${OldWorkflowID}
-            echo CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID:0:7}
+            echo OldWorkflowID=$OldWorkflowID
             export STACKS=$(aws cloudformation list-stacks \
-            --query "StackSummaries[*].StackName" \
-            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
-            # if [[ "${OldWorkflowID}" != "${OldWorkflowID}" ]]
+              --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
+            echo $STACKS
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
               aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
@@ -473,6 +468,35 @@ jobs:
             else
               echo ------------ Cannot cleanup stacks --------------
             fi
+
+  add-prometheus-node-exporter:
+    docker:
+      - image: python:3.10-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
+      - run:
+          name: Install deps
+          command: |
+            apk add --update aws-cli tar gzip ansible nodejs npm
+      - restore_cache:
+          keys: [backend-build]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt node-exporter.yml \
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:
@@ -504,5 +528,11 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
+      - add-prometheus-node-exporter:
+          requires: [smoke-test]
+      # Comment out the next 2 lines if you want to persist your infrastructure
+      - approve:
+          type: approval
+          requires: [cloudfront-update, add-prometheus-node-exporter]
       - cleanup:
-          requires: [cloudfront-update]
+          requires: [approve]
