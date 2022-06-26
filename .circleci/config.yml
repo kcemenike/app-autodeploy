@@ -56,7 +56,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --tags project=udapeople \
-              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:5} \
+              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: get html file
@@ -69,11 +69,11 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-               --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:5} \
-               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
+               --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7} \
+               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Copy index.html to bucket
-          command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5}/index.html
+          command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/index.html
 
   build-frontend:
     docker:
@@ -461,7 +461,7 @@ jobs:
             # Change the initial stack name, as applicable to you
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
-            --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:5} \
+            --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7} \
             --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
             --tags project=udapeople
             echo OldWorkflowID=${OldWorkflowID}
