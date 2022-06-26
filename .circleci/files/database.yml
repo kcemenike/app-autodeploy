@@ -103,9 +103,9 @@ Resources:
       EngineVersion: '13.4'
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
-      MultiAZ: 0
+      MultiAZ: false
       Port: 5432
-      PubliclyAccessible: 1
+      PubliclyAccessible: true
       VPCSecurityGroups:
         - !Ref myDBSecGroup
 Outputs:
