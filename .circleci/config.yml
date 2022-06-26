@@ -585,6 +585,7 @@ workflows:
       - cleanup:
           requires: [approve]
       - destroy-all:
+          requires: [cleanup]
           filters:
             branches:
               only: [master]
