@@ -50,41 +50,41 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - run:
-          name: Initialise cloudfront
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/cloudfront.yml \
-              --tags project=udapeople \
-              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7} \
-              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
+      # - run:
+      #     name: Initialise cloudfront
+      #     command: |
+      #       aws cloudformation deploy \
+      #         --template-file .circleci/files/cloudfront.yml \
+      #         --tags project=udapeople \
+      #         --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7} \
+      #         --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: get html file
           command: |
             curl -L html5example.com > index.html
             cat index.html
-      - run:
-          name: deploy initial bucket
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople \
-               --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7} \
-               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
-      - run:
-          name: Copy index.html to bucket
-          command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/index.html
+      # - run:
+      #     name: deploy initial bucket
+      #     command: |
+      #       aws cloudformation deploy \
+      #         --template-file .circleci/files/frontend.yml \
+      #         --tags project=udapeople \
+      #          --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7} \
+      #          --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+      # - run:
+      #     name: Copy index.html to bucket
+      #     command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/index.html
       - run:
           name: Get AWS params
           command: |
             export vpc-id=$(aws ec2 describe-vpcs \
             --query Vpcs[0].VpcId --output text)
             export subnet-id=$(aws ec2 describe-subnets \
-              --filter Name=vpc-id,Values=$vpc-id --output text) \
-              --query Subnets[0].SubnetId
+              --filter Name=vpc-id,Values=$vpc-id --output text \
+              --query Subnets[0].SubnetId)
             export az=$(aws ec2 describe-subnets \
-              --filter Name=vpc-id,Values=$vpc-id --output text) \
-              --query Subnets[0].AvailabilityZone
+              --filter Name=vpc-id,Values=$vpc-id --output text \
+              --query Subnets[0].AvailabilityZone)
 
             # Write values to env
             echo vpd-id=$vpc-id >> ~/project/infra.env
@@ -96,7 +96,7 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.env
+            - project/infra.env
 
   deploy-db:
     docker:
@@ -111,10 +111,11 @@ jobs:
       - run:
           name: deploy database
           command: |
-            echo "current dir"
-            ls -al .
-            echo "project dir"
-            ls -al ~/project
+            aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
+              --template-file ~/project/.circleci/files/database.yml \
+              --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
+              DBUsername=DBUsername DBPassword=$DBPassword \
+              VPC=$vpc-id AZ=$az Subnet=$subnet-id
 
   deploy-prometheus-monitor:
     docker:
@@ -604,6 +605,7 @@ jobs:
             aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
             aws cloudformation delete-stack --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:
@@ -657,7 +659,7 @@ workflows:
           requires: [approve]
       - destroy-all:
           # requires: [blue-deployment, deploy-db, cleanup]
-          requires: [blue-deployment, deploy-db]
+          requires: [blue-deployment, deploy-db, deploy-prometheus-monitor]
           filters:
             branches:
               only: [master, dev-branch]
