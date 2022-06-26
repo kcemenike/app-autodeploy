@@ -546,6 +546,7 @@ workflows:
       # - cleanup:
       #     requires: [cloudfront-update]
       - cleanup:
+          type: approval
           filters:
             branches:
               only: [cleanup]
