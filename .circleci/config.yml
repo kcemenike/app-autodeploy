@@ -535,4 +535,4 @@ workflows:
           type: approval
           requires: [cloudfront-update, add-prometheus-node-exporter]
       - cleanup:
-          requires: [hold]
+          requires: [approve]
