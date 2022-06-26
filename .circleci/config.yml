@@ -56,7 +56,8 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --tags project=udapeople \
-              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:5}
+              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:5} \
+              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: get html file
           command: |
