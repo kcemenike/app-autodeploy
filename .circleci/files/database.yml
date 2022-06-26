@@ -90,7 +90,7 @@ Resources:
       DBSubnetGroupDescription: Postgres db subnet group
       SubnetIds:
         - !Ref Subnet
-  MyDB:
+  Database:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       AvailabilityZone: !Ref AZ
@@ -107,3 +107,15 @@ Resources:
       PubliclyAccessible: 1
       VPCSecurityGroups:
         - !Ref myDBSecGroup
+Outputs:
+  InstanceId:
+    Description: DB Instance Id
+    Value: !Ref Database
+  EndpointAddress:
+    Description: Endpoint Address
+    Value: !GetAtt Database.Endpoint.Address
+    Export:
+      Name: DatabaseEndpoint
+  EndpointPort:
+    Description: Database port
+    Value: !GetAtt Database.Endpoint.Port
