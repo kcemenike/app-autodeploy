@@ -62,7 +62,7 @@ jobs:
           name: get html file
           command: |
             curl -L html5example.com > index.html
-            curl
+            cat index.html
       - run:
           name: deploy initial bucket
           command: |
