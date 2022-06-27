@@ -115,6 +115,8 @@ Outputs:
   EndpointAddress:
     Description: Endpoint Address
     Value: !GetAtt Database.Endpoint.Address
+    Export:
+      Name: EndpointAddress
   EndpointPort:
     Description: Database port
     Value: !GetAtt Database.Endpoint.Port
