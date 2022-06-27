@@ -1,5 +1,4 @@
 version: 2.1
-# aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=kelechi1
 orbs:
   slack: circleci/slack@4.1
 
@@ -45,18 +44,47 @@ commands:
             npm run migrations:revert
 
 jobs:
-  create-starter-infra:
+  get-aws-params:
     docker:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - run: yum install -y tar gzip
+      - run:
+          name: Get AWS params
+          command: |
+            export vpcId=$(aws ec2 describe-vpcs \
+              --query Vpcs[0].VpcId --output text)
+            export subnetId=$(aws ec2 describe-subnets \
+              --filter Name=vpc-id,Values=$vpcId --output text \
+              --query Subnets[0].SubnetId)
+            export az=$(aws ec2 describe-subnets \
+              --filter Name=vpc-id,Values=$vpcId --output text \
+              --query Subnets[0].AvailabilityZone)
+            # Write values to env
+            echo vpc-id=$vpcId > ~/project/infra.env
+            echo subnet-id=$subnetId >> ~/project/infra.env
+            echo az=$az >> ~/project/infra.env
+            echo image=ami-0cfa91bdbc3be780c >> ~/project/infra.env
+            cat ~/project/infra.env
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/infra.env
+
+  blue-deployment:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
       - run:
           name: Initialise cloudfront
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --tags project=udapeople \
-              --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7} \
+              --stack-name cloudfront-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: get html file
@@ -69,11 +97,45 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-               --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7} \
+               --stack-name starter-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
                --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Copy index.html to bucket
           command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/index.html
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Create database
+          command: |
+            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
+            aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
+              --template-file ~/project/.circleci/files/database.yml \
+              --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
+              DBName=$TYPEORM_DATABASE DBUsername=$TYPEORM_USERNAME DBPassword=$TYPEORM_PASSWORD \
+              VPC=$vpcId AZ=$az Subnet=$subnetId
+
+  deploy-prometheus-monitor:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: deploy Prometheus
+          command: |
+            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
+            echo $vpcId $az $subnetId
+            aws cloudformation deploy --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7} \
+              --template-file ~/project/.circleci/files/prometheusServer.yml \
+              --capabilities CAPABILITY_IAM --parameter-overrides KeyPair=udacity \
+              AuthEmail=$AuthEmail EmailPassword=$EmailPassword FromEmail=$FromEmail ToEmail=$ToEmail \
+              VPC=$vpcId AZ=$az Subnet=$subnetId
 
   build-frontend:
     docker:
@@ -461,7 +523,7 @@ jobs:
             # Change the initial stack name, as applicable to you
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
-            --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7} \
+            --stack-name cloudfront-${CIRCLE_WORKFLOW_ID:0:7} \
             --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
             --tags project=udapeople
             echo OldWorkflowID=${OldWorkflowID}
@@ -540,18 +602,36 @@ jobs:
               --query "Exports[?Name==\`WorkflowID\`].Value" \
               --no-paginate --output text)
             aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-            aws cloudformation delete-stack --stack-name StarterFrontend-${CIRCLE_WORKFLOW_ID:0:7}
-            aws cloudformation delete-stack --stack-name InitialStack-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name starter-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name cloudfront-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name database-${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:
     jobs:
-      - create-starter-infra:
+      - get-aws-params:
           filters:
             branches:
-              only: [master]
-      - build-frontend
-      - build-backend
+              only: [master, dev-branch]
+      - blue-deployment:
+          requires: [get-aws-params]
+          filters:
+            branches:
+              only: [master, dev-branch]
+      - deploy-prometheus-monitor:
+          requires: [get-aws-params]
+          filters:
+            branches:
+              only: [master, dev-branch]
+      - build-frontend:
+          filters:
+            branches:
+              only: [master, dev-branch]
+      - build-backend:
+          filters:
+            branches:
+              only: [master, dev-branch]
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
@@ -585,7 +665,8 @@ workflows:
       - cleanup:
           requires: [approve]
       - destroy-all:
-          requires: [cleanup]
+          requires: [blue-deployment, deploy-prometheus-monitor, cleanup]
+          # requires: [blue-deployment, deploy-prometheus-monitor]
           filters:
             branches:
-              only: [master]
+              only: [master, dev-branch]
