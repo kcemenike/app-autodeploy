@@ -315,7 +315,7 @@ jobs:
           name: Configure server
           command: |
             # Get DB host from AWS
-            export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Key==\`EndpointAddress\`].Value" --output text)
+            export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress\`].Value" --output text)
             echo $TYPEORM_HOST
             # add environment variables to server
             echo NODE_ENV=production > ~/project/backend/.env
