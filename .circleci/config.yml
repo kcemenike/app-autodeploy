@@ -1,5 +1,4 @@
 version: 2.1
-# aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name InitialStack --parameter-overrides WorkflowID=kelechi1
 orbs:
   slack: circleci/slack@4.1
 
@@ -667,7 +666,7 @@ workflows:
           requires: [approve]
       - destroy-all:
           # requires: [blue-deployment, deploy-db, cleanup]
-          requires: [blue-deployment, deploy-db, deploy-prometheus-monitor]
+          requires: [blue-deployment, deploy-prometheus-monitor]
           filters:
             branches:
               only: [master, dev-branch]
