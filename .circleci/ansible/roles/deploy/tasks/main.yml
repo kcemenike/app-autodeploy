@@ -12,7 +12,7 @@
 - name: install deps
   become: yes
   apt:
-    name: ['nodejs', 'npm']
+    name: ['node', 'npm']
     state: latest
     update_cache: yes
 - name: install pm2
@@ -27,7 +27,10 @@
   unarchive:
     src: files/artifact.tar.gz
     dest: .
-
+# - name: link node to nodejs (if you did nodejs)
+#   become: yes
+#   shell: |
+#     ln -s /usr/bin/nodejs /usr/bin/node
 - name: start app
   become: yes
   shell: |
