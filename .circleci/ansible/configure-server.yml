@@ -38,7 +38,5 @@
     # Add more env vars here
 
   roles:
-    - role: weareinteractive.environment
-      become: true
     - configure-server
     # Your code here
