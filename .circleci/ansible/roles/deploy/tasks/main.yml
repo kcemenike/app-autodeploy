@@ -27,10 +27,10 @@
   unarchive:
     src: files/artifact.tar.gz
     dest: .
-- name: link node to nodejs (if you installed nodejs)
-  become: yes
-  shell: |
-    ln -s /usr/bin/nodejs /usr/bin/node
+# - name: link node to nodejs (if you installed nodejs)
+#   become: yes
+#   shell: |
+#     ln -s /usr/bin/nodejs /usr/bin/node
 - name: start app
   become: yes
   shell: |

@@ -40,7 +40,7 @@ commands:
           command: |
             cd ~/project/backend
             npm install
-            npm run build
+            npm run build --silent
             npm run migrations:revert
 
 jobs:
@@ -149,7 +149,7 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm run build
+            npm run build --silent
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -166,7 +166,7 @@ jobs:
           command: |
             cd backend
             npm install
-            npm run build
+            npm run build --silent
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
@@ -366,7 +366,7 @@ jobs:
             echo "From AWS" $TYPEORM_HOST
             cd backend
             npm install
-            npm run build
+            npm run build --silent
             npm run migrations >> migrations_dump.txt
             echo "migrations dump"
             cat migrations_dump.txt
@@ -412,7 +412,7 @@ jobs:
           command: |
             cd frontend
             npm install
-            npm run build
+            npm run build --silent
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             # your code here
@@ -446,7 +446,7 @@ jobs:
             # your code here
             cd backend
             npm install
-            npm run build
+            npm run build --silent
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             # tree -afC /root/project/.circleci -I *node_modules*
