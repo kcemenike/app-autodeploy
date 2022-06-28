@@ -383,9 +383,9 @@ jobs:
           name: Run migrations
           command: |
             # Get hostname and add to env
-            export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" --output text)
-            echo "From backend env" $(grep "TYPEORM_HOST" ~/project/backend/.env | cut -d"=" -f2)
-            echo "From AWS" $TYPEORM_HOST
+            # export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" --output text)
+            export TYPEORM_HOST=$(grep "TYPEORM_HOST" ~/project/backend/.env | cut -d"=" -f2)
+            # echo "From AWS" $TYPEORM_HOST
             cd backend
             npm install
             npm run build --silent
@@ -474,6 +474,7 @@ jobs:
             # tree -afC /root/project/.circleci -I *node_modules*
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            cp ~/project/backend/.env .circleci/ansible/roles/deploy/files/backend.env
             cd .circleci/ansible
             cat inventory.txt
             ansible-galaxy install weareinteractive.environment
