@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Description: Creating an Amazon RDS DB instance
 Parameters:
+  WorkflowID:
+    Description: Unique identifier
+    Type: String
   DBInstanceID:
     Default: mypostgresdb
     Description: My database instance
@@ -110,7 +113,7 @@ Outputs:
     Description: Endpoint Address
     Value: !GetAtt Database.Endpoint.Address
     Export:
-      Name: EndpointAddress
+      Name: !Sub EndpointAddress-${WorkflowID}
   EndpointPort:
     Description: Database port
     Value: !GetAtt Database.Endpoint.Port
