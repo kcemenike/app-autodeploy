@@ -3,8 +3,6 @@
   become: yes
   shell: |
     export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)
-  debug:
-    msg: "{{ lookup ('env', 'NODE_ENV', 'ENVIRONMENT', 'TYPEORM_CONNECTION', 'TYPEORM_HOST', 'TYPEORM_PORT', 'TYPEORM_USERNAME', 'TYPEORM_PASSWORD', 'TYPEORM_DATABASE', 'TYPEORM_MIGRATIONS', 'TYPEORM_MIGRATIONS_DIR')}}"
 - name: 'update and upgrade packages.'
   become: yes
   apt:
