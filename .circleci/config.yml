@@ -361,7 +361,8 @@ jobs:
             cd backend
             npm install
             npm run build
-            npm run migrations > migrations_dump.txt
+            npm run migrations >> migrations_dump.txt
+            echo "migrations dump"
             cat migrations_dump.txt
       - run:
           name: Send migration results to kvdb
@@ -371,8 +372,8 @@ jobs:
               curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
       # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # - destroy-environment:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   deploy-frontend:
     docker:
