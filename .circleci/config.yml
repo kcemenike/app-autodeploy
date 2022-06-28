@@ -355,9 +355,15 @@ jobs:
             apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       - restore_cache:
           keys: [backend-build]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Run migrations
           command: |
+            # Get hostname and add to env
+            export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress\`].Value" --output text)
+            echo "From backend env" $(grep "TYPEORM_HOST" ~/project/backend/.env | cut -d"=" -f2)
+            echo "From AWS" $TYPEORM_HOST
             cd backend
             npm install
             npm run build
