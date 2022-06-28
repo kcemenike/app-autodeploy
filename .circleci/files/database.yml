@@ -84,12 +84,6 @@ Resources:
           IpProtocol: -1
           ToPort: -1
           Description: Allows outward communication on all ports
-  # DBSubnetGroup:
-  #   Type: AWS::RDS::DBSubnetGroup
-  #   Properties:
-  #     DBSubnetGroupDescription: Postgres db subnet group
-  #     SubnetIds:
-  #       - !Ref Subnet
   Database:
     Type: 'AWS::RDS::DBInstance'
     Properties:

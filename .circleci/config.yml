@@ -142,34 +142,47 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [frontend-build]
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys: [frontend-build]
       - run:
           name: Build front-end
           command: |
             cd frontend
             npm install
             npm run build --silent
-      - save_cache:
-          paths: [frontend/node_modules]
-          key: frontend-build
+
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/frontend
+      # - save_cache:
+      #     paths: [frontend/node_modules]
+      #     key: frontend-build
 
   build-backend:
     docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [backend-build]
+      - attach_workspace:
+          at: ~/
+      # - restore_cache:
+      #     keys: [backend-build]
       - run:
           name: Back-end build
           command: |
             cd backend
             npm install
             npm run build --silent
-      - save_cache:
-          paths: [backend/node_modules]
-          key: backend-build
+      # - save_cache:
+      #     paths: [backend/node_modules]
+      #     key: backend-build
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend
 
   test-frontend:
     docker:
@@ -178,9 +191,11 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: ~/
       # Restore from cache
-      - restore_cache:
-          keys: [frontend-build]
+      # - restore_cache:
+      #     keys: [frontend-build]
       # Your job code here
       - run:
           name: Test frontend
@@ -196,9 +211,11 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: ~/
       # Restore from cache
-      - restore_cache:
-          keys: [backend-build]
+      # - restore_cache:
+      #     keys: [backend-build]
       # Your job code here
       - run:
           name: Test backend
@@ -214,9 +231,11 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: ~/
       # Restore from cache
-      - restore_cache:
-          keys: [frontend-build]
+      # - restore_cache:
+      #     keys: [frontend-build]
       # Your job code here
       - run:
           name: Analyse frontend
@@ -233,9 +252,11 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: ~/
       # Restore from cache
-      - restore_cache:
-          keys: [backend-build]
+      # - restore_cache:
+      #     keys: [backend-build]
       # Your job code here
       - run:
           name: Analyse backend
@@ -309,8 +330,8 @@ jobs:
       # attach workspace
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys: [backend-build]
+      # - restore_cache:
+      #     keys: [backend-build]
       - run:
           name: Configure server
           command: |
@@ -353,8 +374,8 @@ jobs:
           name: Install deps
           command: |
             apk add --update --no-cache tar gzip nodejs npm aws-cli curl
-      - restore_cache:
-          keys: [backend-build]
+      # - restore_cache:
+      #     keys: [backend-build]
       - attach_workspace:
           at: ~/
       - run:
@@ -378,8 +399,8 @@ jobs:
               curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
       # Here's where you will add some code to rollback on failure
-      # - destroy-environment:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   deploy-frontend:
     docker:
@@ -581,8 +602,8 @@ jobs:
           name: Install deps
           command: |
             apk add --update aws-cli tar gzip ansible nodejs npm
-      - restore_cache:
-          keys: [backend-build]
+      # - restore_cache:
+      #     keys: [backend-build]
       - attach_workspace:
           at: ~/
       - run:
