@@ -1,8 +1,14 @@
 ---
-- name: Get TYPEORM from file
+- name: Get TYPEORM into env
   become: yes
   shell: |
-    export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)
+    # echo 'export TYPEORM_HOST="postgres-1163683.czzb7xnisytb.us-west-2.rds.amazonaws.com"' >> ~/.bashrc
+    echo 'export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)' >> ~/.bashrc
+    source .bashrc
+# - name: check env vars
+#   shell: printenv
+#     register: myecho
+#   debug: msg="{{myecho.stdout}}"
 - name: 'update and upgrade packages.'
   become: yes
   apt:

@@ -39,8 +39,8 @@ commands:
           # Add when this will run
           command: |
             cd ~/project/backend
-            npm install
-            npm run build --silent
+            npm install > /dev/null
+            npm run build > /dev/null
             npm run migrations:revert
 
 jobs:
@@ -151,8 +151,8 @@ jobs:
           name: Build front-end
           command: |
             cd frontend
-            npm install
-            npm run build --silent
+            npm install > /dev/null
+            npm run build > /dev/null
 
       - persist_to_workspace:
           root: ~/
@@ -175,8 +175,8 @@ jobs:
           name: Back-end build
           command: |
             cd backend
-            npm install
-            npm run build --silent
+            npm install > /dev/null
+            npm run build > /dev/null
       # - save_cache:
       #     paths: [backend/node_modules]
       #     key: backend-build
@@ -202,7 +202,7 @@ jobs:
           name: Test frontend
           command: |
             cd frontend
-            npm install
+            npm install > /dev/null
             npm run test
 
   test-backend:
@@ -222,7 +222,7 @@ jobs:
           name: Test backend
           command: |
             cd backend
-            npm install
+            npm install > /dev/null
             npm run test
 
   scan-frontend:
@@ -242,7 +242,7 @@ jobs:
           name: Analyse frontend
           command: |
             cd frontend
-            npm install
+            npm install > /dev/null
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
 
@@ -263,7 +263,7 @@ jobs:
           name: Analyse backend
           command: |
             cd backend
-            npm install
+            npm install > /dev/null
             npm update mkdirp --depth 6
             npm install --save-dev webpack@5.73.0
             npm audit fix --audit-level=critical --force
@@ -385,10 +385,11 @@ jobs:
             # Get hostname and add to env
             # export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" --output text)
             export TYPEORM_HOST=$(grep "TYPEORM_HOST" ~/project/backend/.env | cut -d"=" -f2)
-            # echo "From AWS" $TYPEORM_HOST
+            echo "From AWS" $TYPEORM_HOST
+            echo "Check db" $TYPEORM_DATABASE
             cd backend
-            npm install
-            npm run build --silent
+            npm install > /dev/null
+            npm run build > /dev/null
             npm run migrations >> migrations_dump.txt
             echo "migrations dump"
             cat migrations_dump.txt
@@ -433,8 +434,8 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
-            npm install
-            npm run build --silent
+            npm install > /dev/null
+            npm run build > /dev/null
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             # your code here
@@ -467,8 +468,8 @@ jobs:
           command: |
             # your code here
             cd backend
-            npm install
-            npm run build --silent
+            npm install > /dev/null
+            npm run build > /dev/null
             cd ..
             tar -C backend -czvf artifact.tar.gz .
             # tree -afC /root/project/.circleci -I *node_modules*
