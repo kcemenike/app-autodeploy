@@ -19,12 +19,6 @@
     name: ['nodejs', 'npm']
     state: latest
     update_cache: yes
-- name: reinstall and rebuild
-  become: yes
-  shell: |
-    npm install
-    npm run build
-    npm run migrations
 - name: install pm2
   become: yes
   npm:
@@ -40,6 +34,9 @@
 - name: start app
   become: yes
   shell: |
+    npm install
+    npm run build
+    npm run migrations
     pm2 stop all
     pm2 start npm -- start
 
