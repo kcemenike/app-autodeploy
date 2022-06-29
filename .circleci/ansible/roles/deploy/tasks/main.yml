@@ -19,6 +19,12 @@
     name: ['nodejs', 'npm']
     state: latest
     update_cache: yes
+- name: reinstall and rebuild
+  become: yes
+  shell: |
+    npm install
+    npm run build
+    npm run migrations
 - name: install pm2
   become: yes
   npm:
@@ -42,7 +48,7 @@
   register: myecho
 - name: check pm2 log
   become: yes
-  shell: pm2 logs
+  shell: pm2 logs | tail -10
   register: pm2Log
 - name: Debug command
   debug:
