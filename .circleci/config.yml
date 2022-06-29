@@ -399,7 +399,6 @@ jobs:
             echo $TYPEORM_HOST
             echo TYPEORM_HOST=$TYPEORM_HOST >> ~/project/backend/.env
             cd backend
-            npm install --package-lock-only
             npm install > /dev/null
             npm run build > /dev/null
             npm run migrations >> migrations_dump.txt
