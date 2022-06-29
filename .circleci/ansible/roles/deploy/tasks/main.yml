@@ -39,11 +39,11 @@
 
 - name: check env vars
   shell: printenv
-    register: myecho
+  register: myecho
 - name: check pm2 log
   become: yes
   shell: pm2 logs
-    register: pm2Log 
+  register: pm2Log
 - name: Debug command
   debug:
     var: myecho
@@ -52,6 +52,3 @@
   debug:
     var: pm2Log
     verbosity: 4
-
-
-
