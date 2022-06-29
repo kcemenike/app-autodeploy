@@ -379,14 +379,18 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
-      - image: python:3.10-alpine3.16
+      # - image: python:3.10-alpine3.16
+      # - image: circleci/node:13.8.0
+      - image: amazon/aws-cli
     steps:
       # Checkout code from git
       - checkout
       - run:
           name: Install deps
           command: |
-            apk add --update --no-cache tar gzip nodejs npm aws-cli curl
+            yum install tar gzip npm nodejs curl -y
+            # apt install --update tar gzip aws-cli curl
+            # apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       # - restore_cache:
       #     keys: [backend-build]
       - attach_workspace:
@@ -399,8 +403,8 @@ jobs:
             echo $TYPEORM_HOST
             echo TYPEORM_HOST=$TYPEORM_HOST >> ~/project/backend/.env
             cd backend
-            npm install > /dev/null
-            npm run build > /dev/null
+            # npm install > /dev/null
+            # npm run build > /dev/null
             npm run migrations >> migrations_dump.txt
             cat migrations_dump.txt
       - persist_to_workspace:
@@ -476,7 +480,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip nodejs npm tree aws-cli ansible
+            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
       - run:
           name: Deploy backend
           command: |
@@ -486,7 +490,6 @@ jobs:
             npm run build > /dev/null
             cd ..
             tar -C backend -czvf artifact.tar.gz .
-            # tree -afC /root/project/.circleci -I *node_modules*
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cp ~/project/backend/.env .circleci/ansible/roles/deploy/files/backend.env
