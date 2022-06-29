@@ -1,13 +1,8 @@
 ---
 - name: Get TYPEORM into env
-  become: yes
+  become: no
   shell: |
     echo 'export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)' >> ~/.bashrc
-    # source .bashrc
-# - name: check env vars
-#   shell: printenv
-#     register: myecho
-#   debug: msg="{{myecho.stdout}}"
 - name: 'update and upgrade packages.'
   become: yes
   apt:
@@ -36,12 +31,27 @@
   unarchive:
     src: files/artifact.tar.gz
     dest: .
-# - name: link node to nodejs (if you installed nodejs)
-#   become: yes
-#   shell: |
-#     ln -s /usr/bin/nodejs /usr/bin/node
 - name: start app
   become: yes
   shell: |
     pm2 stop all
     pm2 start npm -- start
+
+- name: check env vars
+  shell: printenv
+    register: myecho
+- name: check pm2 log
+  become: yes
+  shell: pm2 logs
+    register: pm2Log 
+- name: Debug command
+  debug:
+    var: myecho
+    verbosity: 4
+- name: Show PM2 log
+  debug:
+    var: pm2Log
+    verbosity: 4
+
+
+
