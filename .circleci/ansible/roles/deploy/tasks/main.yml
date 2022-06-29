@@ -34,8 +34,6 @@
 - name: start app
   become: yes
   shell: |
-    npm install
-    npm run build
     npm run migrations
     pm2 stop all
     pm2 start npm -- start
