@@ -43,7 +43,7 @@
   register: myecho
 - name: check pm2 log
   become: yes
-  shell: pm2 logs | tail -10
+  shell: pm2 logs --nostream
   register: pm2Log
 - name: Debug command
   debug:
