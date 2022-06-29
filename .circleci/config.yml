@@ -389,7 +389,10 @@ jobs:
           name: Install deps
           command: |
             # yum install tar gzip npm nodejs curl -y
-            sudo apt install -y tar gzip aws-cli curl
+            sudo apt install -y tar gzip curl
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
             # apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       # - restore_cache:
       #     keys: [backend-build]
