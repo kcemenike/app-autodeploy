@@ -380,16 +380,16 @@ jobs:
     docker:
       # Docker image here that supports NodeJS
       # - image: python:3.10-alpine3.16
-      # - image: circleci/node:13.8.0
-      - image: amazon/aws-cli
+      - image: circleci/node:13.8.0
+      # - image: amazon/aws-cli
     steps:
       # Checkout code from git
       - checkout
       - run:
           name: Install deps
           command: |
-            yum install tar gzip npm nodejs curl -y
-            # apt install --update tar gzip aws-cli curl
+            # yum install tar gzip npm nodejs curl -y
+            apt install --update tar gzip aws-cli curl
             # apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       # - restore_cache:
       #     keys: [backend-build]
