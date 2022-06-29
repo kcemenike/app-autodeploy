@@ -26,7 +26,7 @@ commands:
               --stack-name cloudfront-<<parameters.workflow_id>>
             aws cloudformation delete-stack \
               --stack-name database-<<parameters.workflow_id>>
-            aws s3 rm s3://udapeople-<<parameters.workflow_id:0:5>> --recursive
+            aws s3 rm s3://udapeople-${<<parameters.workflow_id>>:0:5} --recursive
             aws cloudformation delete-stack \
               --stack-name starter-frontend-<<parameters.workflow_id>>
             aws cloudformation delete-stack \
