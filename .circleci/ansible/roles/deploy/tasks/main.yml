@@ -1,6 +1,6 @@
 ---
 - name: Get TYPEORM into env
-  become: no
+  become: yes
   shell: |
     echo 'export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)' >> ~/.bashrc
 - name: 'update and upgrade packages.'

@@ -172,7 +172,8 @@ jobs:
       - run:
           name: prune node modules
           command: |
-            curl -sfL https://gobinaries.com/tj/node-prune | sh
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
 
       - persist_to_workspace:
           root: ~/
@@ -197,6 +198,11 @@ jobs:
             cd backend
             npm install > /dev/null
             npm run build > /dev/null
+      - run:
+          name: prune node modules
+          command: |
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
       # - save_cache:
       #     paths: [backend/node_modules]
       #     key: backend-build
@@ -224,6 +230,11 @@ jobs:
             cd frontend
             npm install > /dev/null
             npm run test
+      - run:
+          name: prune node modules
+          command: |
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
 
   test-backend:
     docker:
@@ -244,6 +255,11 @@ jobs:
             cd backend
             npm install > /dev/null
             npm run test
+      - run:
+          name: prune node modules
+          command: |
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
 
   scan-frontend:
     docker:
@@ -265,6 +281,11 @@ jobs:
             npm install > /dev/null
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - run:
+          name: prune node modules
+          command: |
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
 
   scan-backend:
     docker:
@@ -288,6 +309,11 @@ jobs:
             npm install --save-dev webpack@5.73.0
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - run:
+          name: prune node modules
+          command: |
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -370,7 +396,7 @@ jobs:
 
             cd ~/project/.circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml \
-            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvvvv
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvv
       # save backend back to workspace
       - persist_to_workspace:
           root: ~/
@@ -421,7 +447,7 @@ jobs:
       - run:
           name: Send migration results to kvdb
           command: |
-            if grep -q "migrations" ~/project/backend/migrations_dump.txt
+            if grep -q "has been executed successfully" ~/project/backend/migrations_dump.txt
             then
               curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
@@ -464,7 +490,11 @@ jobs:
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist 2>/dev/null
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             # your code here
-      # Here's where you will add some code to rollback on failure
+      - run:
+          name: prune node modules
+          command: |
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
@@ -495,6 +525,8 @@ jobs:
             cd backend
             npm install 2>/dev/null
             npm run build 2>/dev/null
+            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            sudo node-prune
             cd ..
             tar -C backend -czvf artifact.tar.gz . 2>/dev/null
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
@@ -504,7 +536,7 @@ jobs:
             cat inventory.txt
             ansible-galaxy install weareinteractive.environment
             ansible-playbook -i inventory.txt deploy-backend.yml \
-            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvvvv
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvv
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -533,7 +565,7 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
-            # curl "${API_URL}/api/status"
+            # if curl -s "${API_URL}/api/status"
             if curl -s http://google.com
             then
                 return 0
@@ -640,7 +672,7 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt node-exporter.yml \
-            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvvvv
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvv
       # Here's where you will add some code to rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
