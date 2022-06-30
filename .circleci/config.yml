@@ -169,13 +169,6 @@ jobs:
             cd frontend
             npm install > /dev/null
             npm run build > /dev/null
-      - run:
-          name: prune node modules
-          command: |
-            cd frontend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
-
       - persist_to_workspace:
           root: ~/
           paths:
@@ -199,12 +192,6 @@ jobs:
             cd backend
             npm install > /dev/null
             npm run build > /dev/null
-      - run:
-          name: prune node modules
-          command: |
-            cd backend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
       # - save_cache:
       #     paths: [backend/node_modules]
       #     key: backend-build
@@ -232,12 +219,6 @@ jobs:
             cd frontend
             npm install > /dev/null
             npm run test
-      - run:
-          name: prune node modules
-          command: |
-            cd frontend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
 
   test-backend:
     docker:
@@ -258,12 +239,6 @@ jobs:
             cd backend
             npm install > /dev/null
             npm run test
-      - run:
-          name: prune node modules
-          command: |
-            cd backend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
 
   scan-frontend:
     docker:
@@ -285,12 +260,6 @@ jobs:
             npm install > /dev/null
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-      - run:
-          name: prune node modules
-          command: |
-            cd frontend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
 
   scan-backend:
     docker:
@@ -314,12 +283,6 @@ jobs:
             npm install --save-dev webpack@5.73.0
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-      - run:
-          name: prune node modules
-          command: |
-            sudo backend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
       - slack/notify:
           event: fail
           template: basic_fail_1
