@@ -454,7 +454,7 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
-            npm install 2>/dev/null
+            npm install --silent
             npm run build 2>/dev/null
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist 2>/dev/null
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
@@ -493,7 +493,7 @@ jobs:
           command: |
             # your code here
             cd backend
-            npm install 2>/dev/null
+            npm install --silent
             npm run build 2>/dev/null
             curl -sfL https://gobinaries.com/tj/node-prune | sh
             node-prune

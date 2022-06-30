@@ -1,9 +1,8 @@
 ---
-- name: Get TYPEORM into env
-  become: yes
-  shell: |
-    echo 'export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)' >> ~/.bashrc
-    source .bashrc
+# - name: Get TYPEORM into env
+#   become: yes
+#   shell: |
+#     echo 'export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)' >> ~/.bashrc
 - name: 'update and upgrade packages.'
   become: yes
   apt:
@@ -37,7 +36,7 @@
   shell: |
     npm run migrations
     pm2 delete all
-    pm2 start npm -- start
+    export $(grep TPEORM_HOST /home/ubuntu/.env) && pm2 start npm -- start
 
 - name: check env vars
   shell: cat /home/ubuntu/.env
@@ -49,8 +48,8 @@
 - name: Debug command
   debug:
     var: myecho
-    verbosity: 4
+    verbosity: 2
 - name: Show PM2 log
   debug:
     var: pm2Log
-    verbosity: 4
+    verbosity: 2
