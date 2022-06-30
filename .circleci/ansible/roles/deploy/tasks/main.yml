@@ -3,6 +3,7 @@
   become: yes
   shell: |
     echo 'export TYPEORM_HOST=$(grep "TYPEORM_HOST" /home/ubuntu/.env | cut -d"=" -f2)' >> ~/.bashrc
+    source .bashrc
 - name: 'update and upgrade packages.'
   become: yes
   apt:
@@ -39,7 +40,7 @@
     pm2 start npm -- start
 
 - name: check env vars
-  shell: printenv
+  shell: cat /home/ubuntu/.env
   register: myecho
 - name: check pm2 log
   become: yes

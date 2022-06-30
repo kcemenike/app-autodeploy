@@ -81,7 +81,49 @@ jobs:
           paths:
             - project/infra.env
 
-  blue-cloudfront-bucket:
+  deploy-prometheus-monitor:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: deploy Prometheus
+          command: |
+            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
+            echo $vpcId $az $subnetId
+            aws cloudformation deploy --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7} \
+              --template-file ~/project/.circleci/files/prometheusServer.yml \
+              --capabilities CAPABILITY_IAM --parameter-overrides KeyPair=udacity \
+              AuthEmail=$AuthEmail EmailPassword=$EmailPassword FromEmail=$FromEmail ToEmail=$ToEmail \
+              VPC=$vpcId AZ=$az Subnet=$subnetId
+
+  deploy-database:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: yum install -y tar gzip
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Create database
+          command: |
+            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
+            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
+            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
+            aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
+              --template-file ~/project/.circleci/files/database.yml \
+              --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
+              WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
+              DBName=$TYPEORM_DATABASE DBUsername=$TYPEORM_USERNAME DBPassword=$TYPEORM_PASSWORD \
+              VPC=$vpcId AZ=$az Subnet=$subnetId
+
+  blue-frontend:
     docker:
       - image: amazon/aws-cli
     steps:
@@ -111,48 +153,6 @@ jobs:
       - run:
           name: Copy index.html to bucket
           command: aws s3 cp index.html s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5}/index.html
-
-  deploy-database:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run: yum install -y tar gzip
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Create database
-          command: |
-            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
-            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
-            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
-            aws cloudformation deploy --stack-name database-${CIRCLE_WORKFLOW_ID:0:7} \
-              --template-file ~/project/.circleci/files/database.yml \
-              --parameter-overrides DBInstanceID=postgres-${CIRCLE_WORKFLOW_ID:0:7} \
-              WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
-              DBName=$TYPEORM_DATABASE DBUsername=$TYPEORM_USERNAME DBPassword=$TYPEORM_PASSWORD \
-              VPC=$vpcId AZ=$az Subnet=$subnetId
-
-  deploy-prometheus-monitor:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run: yum install -y tar gzip
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: deploy Prometheus
-          command: |
-            export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
-            export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
-            export az=$(grep "az" ~/project/infra.env | cut -d"=" -f2)
-            echo $vpcId $az $subnetId
-            aws cloudformation deploy --stack-name prometheus-${CIRCLE_WORKFLOW_ID:0:7} \
-              --template-file ~/project/.circleci/files/prometheusServer.yml \
-              --capabilities CAPABILITY_IAM --parameter-overrides KeyPair=udacity \
-              AuthEmail=$AuthEmail EmailPassword=$EmailPassword FromEmail=$FromEmail ToEmail=$ToEmail \
-              VPC=$vpcId AZ=$az Subnet=$subnetId
 
   build-frontend:
     docker:
@@ -513,6 +513,35 @@ jobs:
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
+  add-prometheus-node-exporter:
+    docker:
+      - image: python:3.10-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
+      - run:
+          name: Install deps
+          command: |
+            apk add --update aws-cli tar gzip ansible nodejs npm
+      # - restore_cache:
+      #     keys: [backend-build]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt node-exporter.yml \
+            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvv
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
   smoke-test:
     docker:
       # Lightweight Docker image
@@ -620,35 +649,6 @@ jobs:
               echo ------------ Cannot cleanup stacks --------------
             fi
 
-  add-prometheus-node-exporter:
-    docker:
-      - image: python:3.10-alpine3.16
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
-      - run:
-          name: Install deps
-          command: |
-            apk add --update aws-cli tar gzip ansible nodejs npm
-      # - restore_cache:
-      #     keys: [backend-build]
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Setup Prometheus Node Exporter
-          command: |
-            cd .circleci/ansible
-            cat inventory.txt
-            ansible-playbook -i inventory.txt node-exporter.yml \
-            --key-file ~/.ssh/id_rsa_ab522568df4c3ad5481855d8f93bdfde -vvvv
-      # Here's where you will add some code to rollback on failure
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-
   destroy-all:
     docker:
       - image: amazon/aws-cli
@@ -673,7 +673,7 @@ workflows:
           filters:
             branches:
               only: [master, dev-branch]
-      - blue-cloudfront-bucket:
+      - blue-frontend:
           requires: [get-aws-params]
           filters:
             branches:
@@ -722,7 +722,7 @@ workflows:
       - smoke-test:
           requires: [deploy-backend, deploy-frontend, deploy-database]
       - cloudfront-update:
-          requires: [blue-cloudfront-bucket, smoke-test]
+          requires: [blue-frontend, smoke-test]
       - add-prometheus-node-exporter:
           requires: [smoke-test]
       - approve:
@@ -732,7 +732,7 @@ workflows:
           requires: [approve]
       - destroy-all:
           requires:
-            - blue-cloudfront-bucket
+            - blue-frontend
             - deploy-database
             - deploy-prometheus-monitor
             - cleanup
