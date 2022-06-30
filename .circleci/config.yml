@@ -463,8 +463,8 @@ jobs:
           name: prune node modules
           command: |
             cd frontend
-            curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
+            curl -sfL https://gobinaries.com/tj/node-prune | sh
+            node-prune
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
@@ -487,7 +487,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
+            apk add --update --no-cache tar gzip nodejs npm aws-cli ansible curl
       - run:
           name: Deploy backend
           command: |
@@ -495,8 +495,8 @@ jobs:
             cd backend
             npm install 2>/dev/null
             npm run build 2>/dev/null
-            curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
-            sudo node-prune
+            curl -sfL https://gobinaries.com/tj/node-prune | sh
+            node-prune
             cd ..
             tar -C backend -czvf artifact.tar.gz . 2>/dev/null
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
