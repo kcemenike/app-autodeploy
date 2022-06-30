@@ -172,6 +172,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            cd frontend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
 
@@ -201,6 +202,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            cd backend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
       # - save_cache:
@@ -233,6 +235,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            cd frontend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
 
@@ -258,6 +261,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            cd backend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
 
@@ -284,6 +288,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            cd frontend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
 
@@ -312,6 +317,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            sudo backend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
       - slack/notify:
@@ -493,6 +499,7 @@ jobs:
       - run:
           name: prune node modules
           command: |
+            cd frontend
             sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
       - destroy-environment:
