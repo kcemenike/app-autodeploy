@@ -391,7 +391,7 @@ jobs:
             # yum install tar gzip npm nodejs curl -y
             sudo apt install -y tar gzip curl
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip -qq
+            unzip awscliv2.zip -q
             sudo ./aws/install
             # apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       # - restore_cache:
