@@ -26,7 +26,7 @@ commands:
               --stack-name cloudfront-<<parameters.workflow_id>>
             aws cloudformation delete-stack \
               --stack-name database-<<parameters.workflow_id>>
-            aws s3 rm s3://udapeople-${<<parameters.workflow_id>>:0:5} --recursive
+            aws s3 rm s3://udapeople-$(<<parameters.workflow_id>>:0:5) --recursive
             aws cloudformation delete-stack \
               --stack-name starter-frontend-<<parameters.workflow_id>>
             aws cloudformation delete-stack \
@@ -463,7 +463,7 @@ jobs:
           name: prune node modules
           command: |
             cd frontend
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -495,7 +495,7 @@ jobs:
             cd backend
             npm install 2>/dev/null
             npm run build 2>/dev/null
-            sudo curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
+            curl -sfL https://gobinaries.com/tj/node-prune | sudo sh
             sudo node-prune
             cd ..
             tar -C backend -czvf artifact.tar.gz . 2>/dev/null
