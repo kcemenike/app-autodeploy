@@ -112,6 +112,7 @@ jobs:
           at: ~/
       - run:
           name: Create database
+          no_output_timeout: 20m
           command: |
             export vpcId=$(grep "vpc-id" ~/project/infra.env | cut -d"=" -f2)
             export subnetId=$(grep "subnet-id" ~/project/infra.env | cut -d"=" -f2)
@@ -458,13 +459,6 @@ jobs:
             npm run build 2>/dev/null
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist 2>/dev/null
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-            # your code here
-      - run:
-          name: prune node modules
-          command: |
-            cd frontend
-            curl -sfL https://gobinaries.com/tj/node-prune | sh
-            node-prune
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
@@ -495,8 +489,6 @@ jobs:
             cd backend
             npm install --silent
             npm run build 2>/dev/null
-            curl -sfL https://gobinaries.com/tj/node-prune | sh
-            node-prune
             cd ..
             tar -C backend -czvf artifact.tar.gz . 2>/dev/null
             mkdir -p ~/project/.circleci/ansible/roles/deploy/files/

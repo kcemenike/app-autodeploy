@@ -36,7 +36,7 @@
   shell: |
     npm run migrations
     pm2 delete all
-    export $(grep TPEORM_HOST /home/ubuntu/.env) && pm2 start npm -- start
+    export $(grep TYPEORM_HOST /home/ubuntu/.env) && pm2 start npm -- start
 
 - name: check env vars
   shell: cat /home/ubuntu/.env
