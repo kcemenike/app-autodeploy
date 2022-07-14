@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Description: Creating an Amazon RDS DB instance
+Parameters:
+  WorkflowID:
+    Description: Unique identifier
+    Type: String
+  DBInstanceID:
+    Default: mypostgresdb
+    Description: My database instance
+    Type: String
+    # MinLength: '1'
+    # MaxLength: '63'
+    # AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    # ConstraintDescription: >-
+    #   Must begin with a letter and must not end with a hyphen or contain two
+    #   consecutive hyphens.
+  DBName:
+    Default: postgres
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  DBInstanceClass:
+    Default: db.t3.micro
+    Description: DB instance class
+    Type: String
+    ConstraintDescription: Must select a valid DB instance type.
+  DBAllocatedStorage:
+    Default: '20'
+    Description: The size of the database (GiB)
+    Type: Number
+    MinValue: '20'
+    MaxValue: '65536'
+    ConstraintDescription: must be between 20 and 65536 GiB.
+  DBUsername:
+    Default: 'postgres'
+    NoEcho: 'true'
+    Description: Username for MySQL database access
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBPassword:
+    NoEcho: 'true'
+    Description: Password MySQL database access
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  VPC:
+    Description: Deploy the instance in this VPC
+    Type: String
+    Default: vpc-0666ab7d6fe9ca219
+  Subnet:
+    Description: This subnet must already exist
+    Type: String
+    Default: subnet-03eb430d72e402806
+  AZ:
+    Description: Choose an AZ that corresponds to the Subnet in the !Subnet section
+    Type: String
+    Default: us-west-2c
+  LocalIPAddress:
+    Description: This is your local IP address, it will be used to configure security group ingress
+    Type: String
+    Default: 0.0.0.0/0
+Resources:
+  myDBSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for my Database
+      VpcId: !Ref VPC # vpc-0492b2b84bd1a3194
+      SecurityGroupIngress:
+        - CidrIp:
+            Ref: LocalIPAddress
+          FromPort: 5432
+          IpProtocol: tcp
+          ToPort: 5432
+          Description: Allows inbound comm on port 5432
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: -1
+          IpProtocol: -1
+          ToPort: -1
+          Description: Allows outward communication on all ports
+  Database:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AvailabilityZone: !Ref AZ
+      DBInstanceIdentifier: !Ref DBInstanceID
+      DBName: !Ref DBName
+      DBInstanceClass: !Ref DBInstanceClass
+      # DBSubnetGroupName: !Ref DBSubnetGroup
+      AllocatedStorage: !Ref DBAllocatedStorage
+      Engine: postgres
+      EngineVersion: '13.4'
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      MultiAZ: false
+      Port: 5432
+      PubliclyAccessible: true
+      VPCSecurityGroups:
+        - !Ref myDBSecGroup
+Outputs:
+  InstanceId:
+    Description: DB Instance Id
+    Value: !Ref Database
+  EndpointAddress:
+    Description: Endpoint Address
+    Value: !GetAtt Database.Endpoint.Address
+    Export:
+      Name: !Sub EndpointAddress-${WorkflowID}
+  EndpointPort:
+    Description: Database port
+    Value: !GetAtt Database.Endpoint.Port
