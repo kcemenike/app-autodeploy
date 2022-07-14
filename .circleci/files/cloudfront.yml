@@ -38,7 +38,11 @@ Outputs:
     Value: !Sub ${WorkflowID}
     Description: URL for website hosted on S3
     Export:
+<<<<<<< HEAD
+      Name: WorkflowID
+=======
       Name: !Sub Cloudfront-${WorkflowID}
   DomainName:
     Description: Domain name
     Value: !Join ['', ['https://', !GetAtt WebpageCDN.DomainName]]
+>>>>>>> master
