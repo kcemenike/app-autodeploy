@@ -2,7 +2,7 @@
 
 ## A complete CI/CD project
 
-This project is a part of the Udacity Cloud DevOps nanodegree and executes the following:
+This project executes the following:
 
 - Sets up a complete blue deployment with infrastructure including:
   - Static website deployed in an S3 bucket
